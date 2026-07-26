@@ -7,6 +7,9 @@ import {
   normalCdf,
   normalPdf,
   normalQuantile,
+  fCdf,
+  fQuantile,
+  studentizedRangeQ,
 } from '@/utils/math.utils';
 import { LIMITS } from '@/constants';
 import type {
@@ -19,6 +22,12 @@ import type {
   NormalResults,
   ProportionEstimationInputs,
   EstimationResults,
+  AnovaOneWayResult,
+  AnovaTableRow,
+  AnovaTwoWayResult,
+  GroupSummary,
+  TukeyResult,
+  TukeyComparison,
 } from '@/types';
 
 // =====================================================
@@ -250,5 +259,66 @@ export function calculateProportionEstimation(
     upperBound: pHat + marginOfError,
     confidenceLevel: confidence,
     center: pHat,
+  };
+}
+
+// =====================================================
+// ANOVA — UN FACTOR
+// =====================================================
+export interface LabeledGroup {
+  label: string;
+  values: number[];
+}
+
+export function calculateAnovaOneWay(
+  input: LabeledGroup[],
+  alpha: number,
+): AnovaOneWayResult {
+  const groups: GroupSummary[] = input.map((g) => {
+    const n = g.values.length;
+    const sum = g.values.reduce((a, b) => a + b, 0);
+    return { label: g.label, n, sum, mean: n > 0 ? sum / n : 0 };
+  });
+
+  const N = groups.reduce((a, g) => a + g.n, 0);
+  const grandTotal = groups.reduce((a, g) => a + g.sum, 0);
+  const grandMean = N > 0 ? grandTotal / N : 0;
+  const k = groups.length;
+
+  // SS entre grupos = Σ n_j (x̄_j − x̄)²
+  let ssBetween = 0;
+  groups.forEach((g) => {
+    ssBetween += g.n * (g.mean - grandMean) ** 2;
+  });
+
+  // SS dentro = ΣΣ (x_ij − x̄_j)²
+  let ssWithin = 0;
+  input.forEach((g, j) => {
+    const mean = groups[j].mean;
+    g.values.forEach((v) => {
+      ssWithin += (v - mean) ** 2;
+    });
+  });
+
+  const ssTotal = ssBetween + ssWithin;
+  const dfBetween = k - 1;
+  const dfWithin = N - k;
+  const dfTotal = N - 1;
+  const msBetween = ssBetween / dfBetween;
+  const msWithin = dfWithin > 0 ? ssWithin / dfWithin : 0;
+  const fStatistic = msWithin > 0 ? msBetween / msWithin : 0;
+  const pValue = msWithin > 0 ? 1 - fCdf(fStatistic, dfBetween, dfWithin) : 1;
+  const fCritical = fQuantile(1 - alpha, dfBetween, dfWithin);
+  const rejectH0 = fStatistic > fCritical;
+
+  const rows: AnovaTableRow[] = [
+    { source: 'Entre grupos', ss: ssBetween, df: dfBetween, ms: msBetween, f: fStatistic, pValue, fCritical },
+    { source: 'Dentro de grupos (error)', ss: ssWithin, df: dfWithin, ms: msWithin, f: null, pValue: null, fCritical: null },
+    { source: 'Total', ss: ssTotal, df: dfTotal, ms: null, f: null, pValue: null, fCritical: null },
+  ];
+
+  return {
+    rows, groups, grandMean, grandTotal, N, k,
+    fStatistic, pValue, fCritical, rejectH0, alpha,
   };
 }
