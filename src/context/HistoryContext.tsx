@@ -82,6 +82,7 @@ export function groupByType(
     hypergeometric: [],
     normal: [],
     estimation: [],
+    anova: [],
   };
   for (const entry of history) {
     acc[entry.type].push(entry);

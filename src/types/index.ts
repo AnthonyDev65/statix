@@ -6,7 +6,7 @@
 export type Theme = 'light' | 'dark';
 
 /** Tipo de distribución para navegación e historial */
-export type DistributionType = 'binomial' | 'hypergeometric' | 'normal' | 'estimation';
+export type DistributionType = 'binomial' | 'hypergeometric' | 'normal' | 'estimation' | 'anova';
 
 /** Sección de estimación */
 export type EstimationSection = 'mean' | 'proportion';
@@ -116,4 +116,68 @@ export interface HistoryEntry {
 export interface ValidationError {
   field: string;
   message: string;
+}
+
+// -----------------------------------------------------
+// ANOVA
+// -----------------------------------------------------
+export type AnovaFactorMode = 'one-way' | 'two-way';
+
+/** Una fila de la tabla ANOVA (una fuente de variación). */
+export interface AnovaTableRow {
+  source: string;      // 'Entre grupos', 'Factor A', 'Interacción', 'Error', 'Total'…
+  ss: number;          // suma de cuadrados
+  df: number;          // grados de libertad
+  ms: number | null;   // cuadrado medio (null en 'Total')
+  f: number | null;    // estadístico F (null en 'Error'/'Total')
+  pValue: number | null;
+  fCritical: number | null;
+}
+
+export interface GroupSummary {
+  label: string;
+  n: number;
+  sum: number;
+  mean: number;
+}
+
+export interface AnovaOneWayResult {
+  rows: AnovaTableRow[];
+  groups: GroupSummary[];
+  grandMean: number;
+  grandTotal: number;
+  N: number;
+  k: number;
+  fStatistic: number;
+  pValue: number;
+  fCritical: number;
+  rejectH0: boolean;
+  alpha: number;
+}
+
+export interface TukeyComparison {
+  a: string;
+  b: string;
+  meanDiff: number;      // |x̄_a − x̄_b|
+  hsd: number;           // umbral HSD para el par
+  significant: boolean;
+}
+
+export interface TukeyResult {
+  q: number;
+  comparisons: TukeyComparison[];
+  alpha: number;
+}
+
+export interface AnovaTwoWayResult {
+  rows: AnovaTableRow[];
+  hasReplication: boolean;
+  a: number;             // niveles factor A (filas)
+  b: number;             // niveles factor B (columnas)
+  r: number;             // réplicas por celda (1 si sin repetición)
+  grandMean: number;
+  N: number;
+  alpha: number;
+  rowLabels: string[];
+  colLabels: string[];
 }
