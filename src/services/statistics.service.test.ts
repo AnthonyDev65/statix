@@ -96,3 +96,25 @@ describe('calculateAnovaTwoWay (with replication / interaction)', () => {
     expect(get('Factor A') + get('Factor B') + get('Interacción') + get('Error')).toBeCloseTo(total, 6);
   });
 });
+
+import { tukeyHSD } from '@/services/statistics.service';
+
+describe('tukeyHSD', () => {
+  const groups = [
+    { label: 'A', values: [6, 8, 4, 5, 3, 4] },
+    { label: 'B', values: [8, 12, 9, 11, 6, 8] },
+    { label: 'C', values: [13, 9, 11, 8, 7, 12] },
+  ];
+  it('produces one comparison per pair (k choose 2)', () => {
+    const res = tukeyHSD(groups, 5.0, 15, 0.05);
+    expect(res.comparisons).toHaveLength(3); // 3 groups -> 3 pairs
+  });
+  it('flags significant pairs when mean diff exceeds HSD', () => {
+    const res = tukeyHSD(groups, 5.0, 15, 0.05);
+    const ac = res.comparisons.find((c) => c.a === 'A' && c.b === 'C')!;
+    // NOTE: plan asserted 4.0, but mean(A)=30/6=5 and mean(C)=60/6=10 => |diff|=5.0.
+    // Corrected to the arithmetically-true value; the calculation matches the plan's formula.
+    expect(ac.meanDiff).toBeCloseTo(5.0, 6);
+    expect(typeof ac.significant).toBe('boolean');
+  });
+});

@@ -420,3 +420,40 @@ export function calculateAnovaTwoWay(
 
   return { rows, hasReplication, a, b, r, grandMean, N, alpha, rowLabels, colLabels };
 }
+
+/**
+ * Tukey HSD: compara todos los pares de grupos.
+ * mse = cuadrado medio del error; dfError = gl del error.
+ * HSD_ij = q(k, dfError, α) · √( MSE/2 · (1/n_i + 1/n_j) )
+ */
+export function tukeyHSD(
+  input: LabeledGroup[],
+  mse: number,
+  dfError: number,
+  alpha: number,
+): TukeyResult {
+  const k = input.length;
+  const q = studentizedRangeQ(k, dfError, alpha);
+  const means = input.map((g) => ({
+    label: g.label,
+    n: g.values.length,
+    mean: g.values.reduce((a, b) => a + b, 0) / g.values.length,
+  }));
+
+  const comparisons: TukeyComparison[] = [];
+  for (let i = 0; i < k; i++) {
+    for (let j = i + 1; j < k; j++) {
+      const se = Math.sqrt((mse / 2) * (1 / means[i].n + 1 / means[j].n));
+      const hsd = q * se;
+      const meanDiff = Math.abs(means[i].mean - means[j].mean);
+      comparisons.push({
+        a: means[i].label,
+        b: means[j].label,
+        meanDiff,
+        hsd,
+        significant: meanDiff > hsd,
+      });
+    }
+  }
+  return { q, comparisons, alpha };
+}
