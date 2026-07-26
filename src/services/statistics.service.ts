@@ -322,3 +322,101 @@ export function calculateAnovaOneWay(
     fStatistic, pValue, fCritical, rejectH0, alpha,
   };
 }
+
+// =====================================================
+// ANOVA — DOS FACTORES
+// =====================================================
+export function calculateAnovaTwoWay(
+  matrix: number[][][],
+  alpha: number,
+  rowLabels: string[],
+  colLabels: string[],
+): AnovaTwoWayResult {
+  const a = matrix.length;
+  const b = matrix[0].length;
+  const r = matrix[0][0].length; // réplicas por celda (asumida constante)
+  const hasReplication = r > 1;
+
+  const all: number[] = [];
+  matrix.forEach((row) => row.forEach((cell) => cell.forEach((v) => all.push(v))));
+  const N = all.length;
+  const grandTotal = all.reduce((s, v) => s + v, 0);
+  const grandMean = grandTotal / N;
+
+  const cellMean = (i: number, j: number) =>
+    matrix[i][j].reduce((s, v) => s + v, 0) / matrix[i][j].length;
+
+  // Medias de fila (A) y columna (B)
+  const rowMean = (i: number) => {
+    let s = 0; let c = 0;
+    matrix[i].forEach((cell) => cell.forEach((v) => { s += v; c += 1; }));
+    return s / c;
+  };
+  const colMean = (j: number) => {
+    let s = 0; let c = 0;
+    matrix.forEach((row) => row[j].forEach((v) => { s += v; c += 1; }));
+    return s / c;
+  };
+
+  // SS_A = b·r · Σ (x̄_i.. − x̄)²
+  let ssA = 0;
+  for (let i = 0; i < a; i++) ssA += (b * r) * (rowMean(i) - grandMean) ** 2;
+  // SS_B = a·r · Σ (x̄_.j. − x̄)²
+  let ssB = 0;
+  for (let j = 0; j < b; j++) ssB += (a * r) * (colMean(j) - grandMean) ** 2;
+
+  // SS_total = ΣΣΣ (x − x̄)²
+  const ssTotal = all.reduce((s, v) => s + (v - grandMean) ** 2, 0);
+
+  const rows: AnovaTableRow[] = [];
+  const dfA = a - 1;
+  const dfB = b - 1;
+
+  if (hasReplication) {
+    // SS_cells = r · ΣΣ (x̄_ij − x̄)²  ; SS_AB = SS_cells − SS_A − SS_B
+    let ssCells = 0;
+    for (let i = 0; i < a; i++)
+      for (let j = 0; j < b; j++) ssCells += r * (cellMean(i, j) - grandMean) ** 2;
+    const ssAB = ssCells - ssA - ssB;
+    // SS_error = ΣΣΣ (x − x̄_ij)²
+    let ssError = 0;
+    for (let i = 0; i < a; i++)
+      for (let j = 0; j < b; j++) {
+        const m = cellMean(i, j);
+        matrix[i][j].forEach((v) => { ssError += (v - m) ** 2; });
+      }
+    const dfAB = dfA * dfB;
+    const dfError = a * b * (r - 1);
+    const msA = ssA / dfA;
+    const msB = ssB / dfB;
+    const msAB = ssAB / dfAB;
+    const msError = ssError / dfError;
+    const fA = msA / msError;
+    const fB = msB / msError;
+    const fAB = msAB / msError;
+    rows.push(
+      { source: 'Factor A (filas)', ss: ssA, df: dfA, ms: msA, f: fA, pValue: 1 - fCdf(fA, dfA, dfError), fCritical: fQuantile(1 - alpha, dfA, dfError) },
+      { source: 'Factor B (columnas)', ss: ssB, df: dfB, ms: msB, f: fB, pValue: 1 - fCdf(fB, dfB, dfError), fCritical: fQuantile(1 - alpha, dfB, dfError) },
+      { source: 'Interacción A×B', ss: ssAB, df: dfAB, ms: msAB, f: fAB, pValue: 1 - fCdf(fAB, dfAB, dfError), fCritical: fQuantile(1 - alpha, dfAB, dfError) },
+      { source: 'Error', ss: ssError, df: dfError, ms: msError, f: null, pValue: null, fCritical: null },
+      { source: 'Total', ss: ssTotal, df: N - 1, ms: null, f: null, pValue: null, fCritical: null },
+    );
+  } else {
+    // Sin repetición: SS_error = SS_total − SS_A − SS_B
+    const ssError = ssTotal - ssA - ssB;
+    const dfError = dfA * dfB;
+    const msA = ssA / dfA;
+    const msB = ssB / dfB;
+    const msError = ssError / dfError;
+    const fA = msA / msError;
+    const fB = msB / msError;
+    rows.push(
+      { source: 'Factor A (filas)', ss: ssA, df: dfA, ms: msA, f: fA, pValue: 1 - fCdf(fA, dfA, dfError), fCritical: fQuantile(1 - alpha, dfA, dfError) },
+      { source: 'Factor B (columnas)', ss: ssB, df: dfB, ms: msB, f: fB, pValue: 1 - fCdf(fB, dfB, dfError), fCritical: fQuantile(1 - alpha, dfB, dfError) },
+      { source: 'Error', ss: ssError, df: dfError, ms: msError, f: null, pValue: null, fCritical: null },
+      { source: 'Total', ss: ssTotal, df: N - 1, ms: null, f: null, pValue: null, fCritical: null },
+    );
+  }
+
+  return { rows, hasReplication, a, b, r, grandMean, N, alpha, rowLabels, colLabels };
+}
