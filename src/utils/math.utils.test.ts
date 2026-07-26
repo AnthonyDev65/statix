@@ -42,3 +42,18 @@ describe('fCdf (F-distribution CDF)', () => {
     expect(fCdf(1, 4, 15)).toBeLessThan(fCdf(3, 4, 15));
   });
 });
+
+import { fQuantile } from '@/utils/math.utils';
+
+describe('fQuantile (inverse F CDF)', () => {
+  it('F_0.05(3,12): quantile at 0.95 ~ 3.490', () => {
+    expect(fQuantile(0.95, 3, 12)).toBeCloseTo(3.490, 2);
+  });
+  it('F_0.05(2,27) ~ 3.354', () => {
+    expect(fQuantile(0.95, 2, 27)).toBeCloseTo(3.354, 2);
+  });
+  it('round-trips with fCdf', () => {
+    const q = fQuantile(0.9, 4, 20);
+    expect(fCdf(q, 4, 20)).toBeCloseTo(0.9, 4);
+  });
+});

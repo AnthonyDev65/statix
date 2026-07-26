@@ -188,3 +188,17 @@ export function fCdf(f: number, d1: number, d2: number): number {
   const x = (d1 * f) / (d1 * f + d2);
   return incompleteBeta(x, d1 / 2, d2 / 2);
 }
+
+/** Cuantil de F (inversa de la CDF) por bisección. */
+export function fQuantile(p: number, d1: number, d2: number): number {
+  if (p <= 0) return 0;
+  if (p >= 1) return Infinity;
+  let lo = 0;
+  let hi = 1e7;
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    if (fCdf(mid, d1, d2) < p) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
