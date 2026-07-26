@@ -57,3 +57,22 @@ describe('fQuantile (inverse F CDF)', () => {
     expect(fCdf(q, 4, 20)).toBeCloseTo(0.9, 4);
   });
 });
+
+import { studentizedRangeQ } from '@/utils/math.utils';
+
+describe('studentizedRangeQ (Tukey q)', () => {
+  it('q_0.05(k=3, df=12) ~ 3.77', () => {
+    expect(studentizedRangeQ(3, 12, 0.05)).toBeCloseTo(3.77, 1);
+  });
+  it('q_0.05(k=4, df=20) ~ 3.96', () => {
+    expect(studentizedRangeQ(4, 20, 0.05)).toBeCloseTo(3.96, 1);
+  });
+  it('q_0.01(k=3, df=12) ~ 5.05', () => {
+    expect(studentizedRangeQ(3, 12, 0.01)).toBeCloseTo(5.05, 1);
+  });
+  it('interpolates between tabulated df', () => {
+    const q = studentizedRangeQ(3, 13, 0.05); // between df=12 and df=14
+    expect(q).toBeGreaterThan(studentizedRangeQ(3, 14, 0.05));
+    expect(q).toBeLessThan(studentizedRangeQ(3, 12, 0.05));
+  });
+});
