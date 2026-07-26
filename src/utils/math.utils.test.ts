@@ -24,3 +24,21 @@ describe('incompleteBeta (regularized I_x(a,b))', () => {
     expect(incompleteBeta(0.5, 0.5, 0.5)).toBeCloseTo(0.5, 8);
   });
 });
+
+import { fCdf } from '@/utils/math.utils';
+
+describe('fCdf (F-distribution CDF)', () => {
+  it('is 0 for f<=0', () => {
+    expect(fCdf(0, 3, 10)).toBe(0);
+    expect(fCdf(-2, 3, 10)).toBe(0);
+  });
+  it('CDF at the 0.95 critical value ~ 0.95 (F_0.05(3,12)=3.490)', () => {
+    expect(fCdf(3.490, 3, 12)).toBeCloseTo(0.95, 3);
+  });
+  it('CDF at F_0.05(5,20)=2.711 is ~0.95', () => {
+    expect(fCdf(2.711, 5, 20)).toBeCloseTo(0.95, 3);
+  });
+  it('is increasing', () => {
+    expect(fCdf(1, 4, 15)).toBeLessThan(fCdf(3, 4, 15));
+  });
+});

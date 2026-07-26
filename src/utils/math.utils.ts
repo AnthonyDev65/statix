@@ -181,3 +181,10 @@ export function incompleteBeta(x: number, a: number, b: number): number {
   }
   return 1 - (front * betacf(b, a, 1 - x)) / b;
 }
+
+/** CDF de la distribución F con d1, d2 grados de libertad: P(F ≤ f). */
+export function fCdf(f: number, d1: number, d2: number): number {
+  if (f <= 0) return 0;
+  const x = (d1 * f) / (d1 * f + d2);
+  return incompleteBeta(x, d1 / 2, d2 / 2);
+}
