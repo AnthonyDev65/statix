@@ -4,12 +4,13 @@
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowUpRight,
   BookOpen,
   ChevronRight,
+  GitCommitVertical,
   Layers,
   Sigma,
   Target,
+  TableProperties,
   X,
   Activity,
   type LucideIcon,
@@ -23,7 +24,7 @@ interface SidebarProps {
 }
 
 const ICONS: Record<string, LucideIcon> = {
-  Sigma, Layers, Activity, Target,
+  Sigma, Layers, Activity, Target, TableProperties,
 };
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -148,8 +149,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             Resources
           </p>
           <ul className="space-y-0.5">
-            <ResourceLink icon={BookOpen} label="Documentation" badge="soon" />
-            <ResourceLink icon={ArrowUpRight} label="Changelog" badge="v1.0" />
+            <ResourceLink to="/docs" icon={BookOpen} label="Documentación" badge="docs" onClose={onClose} />
+            <ResourceLink to="/changelog" icon={GitCommitVertical} label="Changelog" badge="v1.2" onClose={onClose} />
           </ul>
         </nav>
 
@@ -182,24 +183,33 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 }
 
 function ResourceLink({
-  icon: Icon, label, badge,
+  to, icon: Icon, label, badge, onClose,
 }: {
+  to: string;
   icon: LucideIcon;
   label: string;
   badge: string;
+  onClose: () => void;
 }) {
   return (
     <li>
-      <a
-        href="#"
-        className="group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13.5px] text-v0-500/70 transition-all duration-150 hover:bg-v0-75 hover:text-v0-900 dark:text-v0-300/80 dark:hover:bg-v0-900/60 dark:hover:text-v0-100"
+      <NavLink
+        to={to}
+        onClick={onClose}
+        className={({ isActive }) =>
+          `group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13.5px] transition-all duration-150 ${
+            isActive
+              ? 'bg-v0-100 text-v0-950 dark:bg-v0-900 dark:text-v0-50'
+              : 'text-v0-500/70 hover:bg-v0-75 hover:text-v0-900 dark:text-v0-300/80 dark:hover:bg-v0-900/60 dark:hover:text-v0-100'
+          }`
+        }
       >
         <Icon size={13} strokeWidth={1.75} className="text-v0-400/70 dark:text-v0-500/70 group-hover:text-v0-700 dark:group-hover:text-v0-200" />
         <span className="flex-1 font-medium">{label}</span>
         <span className="rounded-md border border-v0-150/30 px-1.5 py-px font-mono text-[10px] text-v0-400/70 dark:border-v0-800/30 dark:text-v0-500/70">
           {badge}
         </span>
-      </a>
+      </NavLink>
     </li>
   );
 }

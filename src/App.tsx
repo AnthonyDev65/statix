@@ -10,6 +10,9 @@ import { BinomialPage } from '@/pages/BinomialPage';
 import { HypergeometricPage } from '@/pages/HypergeometricPage';
 import { NormalPage } from '@/pages/NormalPage';
 import { EstimationPage } from '@/pages/EstimationPage';
+import { AnovaPage } from '@/pages/AnovaPage';
+import { DocsPage } from '@/pages/DocsPage';
+import { ChangelogPage } from '@/pages/ChangelogPage';
 
 export function App() {
   return (
@@ -23,6 +26,9 @@ export function App() {
               <Route path="/hypergeometric" element={<HypergeometricPage />} />
               <Route path="/normal" element={<NormalPage />} />
               <Route path="/estimation" element={<EstimationPage />} />
+              <Route path="/anova" element={<AnovaPage />} />
+              <Route path="/docs" element={<DocsPage />} />
+              <Route path="/changelog" element={<ChangelogPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </MainLayout>

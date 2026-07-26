@@ -48,6 +48,13 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/estimation',
     icon: 'Target',
   },
+  {
+    id: 'anova',
+    label: 'ANOVA',
+    description: 'Análisis de la varianza para uno y dos factores',
+    path: '/anova',
+    icon: 'TableProperties',
+  },
 ];
 
 // -----------------------------------------------------
