@@ -119,3 +119,42 @@ export const ESTIMATION_FORMULAS: FormulaDef[] = [
     description: 'Rango donde se encuentra la verdadera proporción poblacional.',
   },
 ];
+
+export const ANOVA_FORMULAS: FormulaDef[] = [
+  {
+    id: 'ss-between',
+    label: 'Suma de Cuadrados Entre Grupos',
+    latex: 'SC_{entre} = \\sum_{j=1}^{k} n_j\\,(\\bar{x}_j - \\bar{x})^{2}',
+    description: 'Variabilidad explicada por las diferencias entre las medias de los grupos.',
+  },
+  {
+    id: 'ss-within',
+    label: 'Suma de Cuadrados Dentro',
+    latex: 'SC_{dentro} = \\sum_{j=1}^{k} \\sum_{i=1}^{n_j} (x_{ij} - \\bar{x}_j)^{2}',
+    description: 'Variabilidad no explicada (dentro de cada grupo), la componente de error.',
+  },
+  {
+    id: 'ms',
+    label: 'Cuadrados Medios',
+    latex: 'CM = \\dfrac{SC}{gl} \\qquad CM_{entre}=\\dfrac{SC_{entre}}{k-1}, \\;\\; CM_{dentro}=\\dfrac{SC_{dentro}}{N-k}',
+    description: 'Cada suma de cuadrados dividida entre sus grados de libertad.',
+  },
+  {
+    id: 'f',
+    label: 'Estadístico F',
+    latex: 'F = \\dfrac{CM_{entre}}{CM_{dentro}}',
+    description: 'Razón de varianzas. Grande cuando las medias difieren más que el ruido interno.',
+  },
+  {
+    id: 'ss-total',
+    label: 'Identidad de la Suma de Cuadrados',
+    latex: 'SC_{total} = SC_{entre} + SC_{dentro}',
+    description: 'La variabilidad total se descompone en explicada más error.',
+  },
+  {
+    id: 'tukey',
+    label: 'Tukey HSD',
+    latex: 'HSD = q_{\\alpha,\\,k,\\,gl_{error}} \\cdot \\sqrt{\\dfrac{CM_{error}}{2}\\left(\\dfrac{1}{n_i}+\\dfrac{1}{n_j}\\right)}',
+    description: 'Umbral de diferencia significativa entre pares de medias tras rechazar H₀.',
+  },
+];
