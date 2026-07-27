@@ -78,8 +78,9 @@ export function AnovaPage() {
   const twoWay = useMemo(() => {
     const matrix = parseGridTwoWay(grid2);
     // rejilla rectangular y celdas no vacías
+    const cols = matrix[0]?.length ?? 0;
     const ok = matrix.length >= 2
-      && matrix.every((row) => row.length >= 2 && row.every((cell) => cell.length >= 1));
+      && matrix.every((row) => row.length === cols && row.length >= 2 && row.every((cell) => cell.length >= 1));
     if (!ok) return null;
     const { r } = detectReplication(matrix);
     // exigir réplicas homogéneas

@@ -306,8 +306,28 @@ export function calculateAnovaOneWay(
   const dfTotal = N - 1;
   const msBetween = ssBetween / dfBetween;
   const msWithin = dfWithin > 0 ? ssWithin / dfWithin : 0;
-  const fStatistic = msWithin > 0 ? msBetween / msWithin : 0;
-  const pValue = msWithin > 0 ? 1 - fCdf(fStatistic, dfBetween, dfWithin) : 1;
+
+  // Estadístico F y valor-p, con manejo de varianza de error cero.
+  let fStatistic: number;
+  let pValue: number;
+  if (msWithin > 0) {
+    fStatistic = msBetween / msWithin;
+    pValue = 1 - fCdf(fStatistic, dfBetween, dfWithin);
+  } else if (dfWithin > 0) {
+    // Varianza dentro de grupos nula: si las medias difieren (ssBetween > 0)
+    // el F es efectivamente +∞ y se rechaza H₀; si todo es idéntico, no.
+    if (ssBetween > 0) {
+      fStatistic = Infinity;
+      pValue = 0;
+    } else {
+      fStatistic = 0;
+      pValue = 1;
+    }
+  } else {
+    fStatistic = 0;
+    pValue = 1;
+  }
+
   const fCritical = fQuantile(1 - alpha, dfBetween, dfWithin);
   const rejectH0 = fStatistic > fCritical;
 
@@ -372,6 +392,21 @@ export function calculateAnovaTwoWay(
   const dfA = a - 1;
   const dfB = b - 1;
 
+  // F y valor-p para un efecto, con manejo de varianza de error cero
+  // (evita NaN por 0/0 e Infinity por ms/0).
+  const effectFP = (
+    ms: number,
+    msError: number,
+    dfEffect: number,
+    dfError: number,
+  ): { f: number; pValue: number } => {
+    if (msError > 0) {
+      const f = ms / msError;
+      return { f, pValue: 1 - fCdf(f, dfEffect, dfError) };
+    }
+    return { f: ms > 0 ? Infinity : 0, pValue: ms > 0 ? 0 : 1 };
+  };
+
   if (hasReplication) {
     // SS_cells = r · ΣΣ (x̄_ij − x̄)²  ; SS_AB = SS_cells − SS_A − SS_B
     let ssCells = 0;
@@ -391,13 +426,13 @@ export function calculateAnovaTwoWay(
     const msB = ssB / dfB;
     const msAB = ssAB / dfAB;
     const msError = ssError / dfError;
-    const fA = msA / msError;
-    const fB = msB / msError;
-    const fAB = msAB / msError;
+    const rA = effectFP(msA, msError, dfA, dfError);
+    const rB = effectFP(msB, msError, dfB, dfError);
+    const rAB = effectFP(msAB, msError, dfAB, dfError);
     rows.push(
-      { source: 'Factor A (filas)', ss: ssA, df: dfA, ms: msA, f: fA, pValue: 1 - fCdf(fA, dfA, dfError), fCritical: fQuantile(1 - alpha, dfA, dfError) },
-      { source: 'Factor B (columnas)', ss: ssB, df: dfB, ms: msB, f: fB, pValue: 1 - fCdf(fB, dfB, dfError), fCritical: fQuantile(1 - alpha, dfB, dfError) },
-      { source: 'Interacción A×B', ss: ssAB, df: dfAB, ms: msAB, f: fAB, pValue: 1 - fCdf(fAB, dfAB, dfError), fCritical: fQuantile(1 - alpha, dfAB, dfError) },
+      { source: 'Factor A (filas)', ss: ssA, df: dfA, ms: msA, f: rA.f, pValue: rA.pValue, fCritical: fQuantile(1 - alpha, dfA, dfError) },
+      { source: 'Factor B (columnas)', ss: ssB, df: dfB, ms: msB, f: rB.f, pValue: rB.pValue, fCritical: fQuantile(1 - alpha, dfB, dfError) },
+      { source: 'Interacción A×B', ss: ssAB, df: dfAB, ms: msAB, f: rAB.f, pValue: rAB.pValue, fCritical: fQuantile(1 - alpha, dfAB, dfError) },
       { source: 'Error', ss: ssError, df: dfError, ms: msError, f: null, pValue: null, fCritical: null },
       { source: 'Total', ss: ssTotal, df: N - 1, ms: null, f: null, pValue: null, fCritical: null },
     );
@@ -408,11 +443,11 @@ export function calculateAnovaTwoWay(
     const msA = ssA / dfA;
     const msB = ssB / dfB;
     const msError = ssError / dfError;
-    const fA = msA / msError;
-    const fB = msB / msError;
+    const rA = effectFP(msA, msError, dfA, dfError);
+    const rB = effectFP(msB, msError, dfB, dfError);
     rows.push(
-      { source: 'Factor A (filas)', ss: ssA, df: dfA, ms: msA, f: fA, pValue: 1 - fCdf(fA, dfA, dfError), fCritical: fQuantile(1 - alpha, dfA, dfError) },
-      { source: 'Factor B (columnas)', ss: ssB, df: dfB, ms: msB, f: fB, pValue: 1 - fCdf(fB, dfB, dfError), fCritical: fQuantile(1 - alpha, dfB, dfError) },
+      { source: 'Factor A (filas)', ss: ssA, df: dfA, ms: msA, f: rA.f, pValue: rA.pValue, fCritical: fQuantile(1 - alpha, dfA, dfError) },
+      { source: 'Factor B (columnas)', ss: ssB, df: dfB, ms: msB, f: rB.f, pValue: rB.pValue, fCritical: fQuantile(1 - alpha, dfB, dfError) },
       { source: 'Error', ss: ssError, df: dfError, ms: msError, f: null, pValue: null, fCritical: null },
       { source: 'Total', ss: ssTotal, df: N - 1, ms: null, f: null, pValue: null, fCritical: null },
     );

@@ -118,3 +118,35 @@ describe('tukeyHSD', () => {
     expect(typeof ac.significant).toBe('boolean');
   });
 });
+
+describe('ANOVA degenerate zero-variance cases', () => {
+  it('one-way: zero within-variance but differing means rejects H0', () => {
+    const r = calculateAnovaOneWay([
+      { label: 'A', values: [5, 5] },
+      { label: 'B', values: [9, 9] },
+    ], 0.05);
+    expect(r.fStatistic).toBe(Infinity);
+    expect(r.pValue).toBe(0);
+    expect(r.rejectH0).toBe(true);
+  });
+  it('one-way: identical groups do not reject H0', () => {
+    const r = calculateAnovaOneWay([
+      { label: 'A', values: [5, 5] },
+      { label: 'B', values: [5, 5] },
+    ], 0.05);
+    expect(r.fStatistic).toBe(0);
+    expect(r.rejectH0).toBe(false);
+  });
+  it('two-way no-replication with additive matrix produces no NaN', () => {
+    const matrix = [
+      [[1], [2], [3]],
+      [[2], [3], [4]],
+      [[3], [4], [5]],
+    ]; // perfectly additive -> ssError = 0
+    const r = calculateAnovaTwoWay(matrix, 0.05, ['a1','a2','a3'], ['b1','b2','b3']);
+    r.rows.forEach((row) => {
+      if (row.f !== null) expect(Number.isNaN(row.f)).toBe(false);
+      if (row.pValue !== null) expect(Number.isNaN(row.pValue)).toBe(false);
+    });
+  });
+});
