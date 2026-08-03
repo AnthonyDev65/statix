@@ -1,0 +1,29 @@
+# Dependencias e artefactos (se regeneran dentro del build)
+node_modules
+dist
+dist-ssr
+
+# Git y metadatos
+.git
+.gitignore
+
+# Caché de TypeScript
+*.tsbuildinfo
+
+# Docs y material que no forma parte del bundle
+docs
+.agents
+EXPLICACION-CLASE.md
+
+# Logs y locales
+*.log
+*.local
+
+# Editor
+.vscode
+.idea
+.DS_Store
+
+# Archivos de contenedor (no se necesitan dentro de la imagen)
+Dockerfile
+.dockerignore
