@@ -16,6 +16,7 @@ import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { TheoryDocs } from '@/components/TheoryDocs';
+import { AdvancedOnly } from '@/components/AdvancedOnly';
 import { DistributionChart } from '@/charts';
 import { normalSchema, type NormalFormValues } from '@/utils/validators.utils';
 import { calculateNormal } from '@/services/statistics.service';
@@ -37,7 +38,7 @@ const MODES: Array<{ value: NormalMode; label: string; notation: string; hint: s
 export function NormalPage() {
   const { add } = useHistory();
   const {
-    register, handleSubmit, formState: { errors },
+    handleSubmit, formState: { errors },
     setValue, watch, reset,
   } = useForm<NormalFormValues>({
     resolver: zodResolver(normalSchema),
@@ -123,14 +124,14 @@ Probabilidad: ${formatNumber(display.probability, 6)} (${formatProbability(displ
           >
             <div className="grid gap-5 sm:grid-cols-2">
               <NumberInput
-                {...register('mu')} label="Media (μ)"
+                label="Media (μ)"
                 tooltip="Centro de la distribución." step={0.01}
                 value={values.mu}
                 onValueChange={(v) => setValue('mu', v, { shouldValidate: true, shouldDirty: true })}
                 error={errors.mu?.message}
               />
               <NumberInput
-                {...register('sigma')} label="Desviación (σ)"
+                label="Desviación (σ)"
                 tooltip="Dispersión de la distribución. > 0."
                 min={0.0001} step={0.01}
                 value={values.sigma}
@@ -140,7 +141,7 @@ Probabilidad: ${formatNumber(display.probability, 6)} (${formatProbability(displ
             </div>
 
             <NumberInput
-              {...register('x')} label="Valor (x)"
+              label="Valor (x)"
               tooltip="Valor a evaluar en la distribución." step={0.01}
               value={values.x}
               onValueChange={(v) => setValue('x', v, { shouldValidate: true, shouldDirty: true })}
@@ -149,7 +150,7 @@ Probabilidad: ${formatNumber(display.probability, 6)} (${formatProbability(displ
 
             {values.mode === 'between' && (
               <NumberInput
-                {...register('x2')} label="Valor (a)"
+                label="Valor (a)"
                 tooltip="Extremo inferior (a) del intervalo." step={0.01}
                 value={values.x2 ?? 0}
                 onValueChange={(v) => setValue('x2', v, { shouldValidate: true, shouldDirty: true })}
@@ -241,7 +242,7 @@ Probabilidad: ${formatNumber(display.probability, 6)} (${formatProbability(displ
         </Section>
       </div>
 
-      <Section title="Density curve" description="El área sombreada representa la probabilidad calculada">
+      <Section title="Density curve" divider description="El área sombreada representa la probabilidad calculada">
         <div className="overflow-hidden rounded-xl border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900">
           <div className="flex items-center justify-between border-b border-v0-150/30 px-5 py-3 dark:border-v0-800/30">
             <div className="flex items-center gap-2.5">
@@ -263,17 +264,19 @@ Probabilidad: ${formatNumber(display.probability, 6)} (${formatProbability(displ
         </div>
       </Section>
 
-      <Section title="Framework" monospaceTitle description="Definición y estandarización">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {NORMAL_FORMULAS.map((f, i) => (
-            <FormulaCard key={f.id} formula={f} index={i} />
-          ))}
-        </div>
-      </Section>
+      <AdvancedOnly>
+        <Section title="Framework" monospaceTitle divider description="Definición y estandarización">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {NORMAL_FORMULAS.map((f, i) => (
+              <FormulaCard key={f.id} formula={f} index={i} />
+            ))}
+          </div>
+        </Section>
 
-      <TheoryDocs moduleId="normal" />
+        <TheoryDocs moduleId="normal" />
 
-      <HistoryPanel />
+        <HistoryPanel />
+      </AdvancedOnly>
     </div>
   );
 }

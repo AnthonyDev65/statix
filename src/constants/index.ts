@@ -81,6 +81,7 @@ export const LN_SQRT_2PI = Math.log(SQRT_2PI);
 export const STORAGE_KEYS = {
   THEME: 'statix:theme',
   HISTORY: 'statix:history',
+  UI_MODE: 'statix:ui-mode',
 } as const;
 
 // -----------------------------------------------------

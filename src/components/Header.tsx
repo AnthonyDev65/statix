@@ -6,7 +6,11 @@ import { Menu, Search, Github } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { APP_NAME, APP_TAGLINE } from '@/constants';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ModeToggle } from '@/components/ModeToggle';
 import { SearchModal } from '@/components/SearchModal';
+import { useUIMode } from '@/context/UIModeContext';
+
+const GITHUB_URL = 'https://github.com/AnthonyDev65';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -14,6 +18,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const { simpleMode } = useUIMode();
 
   // Atajo global ⌘K / Ctrl+K para abrir el buscador de teoría.
   useEffect(() => {
@@ -35,7 +40,9 @@ export function Header({ onMenuClick }: HeaderProps) {
         <button
           type="button"
           onClick={onMenuClick}
-          className="-ml-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-v0-500/70 transition-all duration-200 hover:bg-v0-75 hover:text-v0-900 active:scale-95 active:bg-v0-100 dark:text-v0-300/80 dark:hover:bg-v0-900 dark:hover:text-v0-100 dark:active:bg-v0-800 lg:hidden"
+          className={`-ml-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-v0-500/70 transition-all duration-200 hover:bg-v0-75 hover:text-v0-900 active:scale-95 active:bg-v0-100 dark:text-v0-300/80 dark:hover:bg-v0-900 dark:hover:text-v0-100 dark:active:bg-v0-800 ${
+            simpleMode ? '' : 'lg:hidden'
+          }`}
           aria-label="Abrir menú"
         >
           <Menu size={18} strokeWidth={1.75} />
@@ -93,22 +100,29 @@ export function Header({ onMenuClick }: HeaderProps) {
           </button>
 
           {/* Status badge — Vercel style: dot pulsante + texto mono */}
-          <span className="hidden items-center gap-2 rounded-md border border-v0-150/30 bg-v0-50 px-2.5 py-1.5 font-mono text-[11px] font-medium text-v0-700 transition-colors dark:border-v0-800/30 dark:bg-v0-900 dark:text-v0-200 md:inline-flex">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-500/60" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          {!simpleMode && (
+            <span className="hidden items-center gap-2 rounded-md border border-v0-150/30 bg-v0-50 px-2.5 py-1.5 font-mono text-[11px] font-medium text-v0-700 transition-colors dark:border-v0-800/30 dark:bg-v0-900 dark:text-v0-200 md:inline-flex">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-500/60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              </span>
+              Ready
             </span>
-            Ready
-          </span>
+          )}
 
           {/* GitHub icon */}
           <a
-            href="#"
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="hidden h-10 w-10 items-center justify-center rounded-md text-v0-500/70 transition-all duration-200 hover:bg-v0-75 hover:text-v0-900 active:scale-95 active:bg-v0-100 dark:text-v0-300/80 dark:hover:bg-v0-900 dark:hover:text-v0-100 dark:active:bg-v0-800 sm:inline-flex"
-            aria-label="Repositorio"
+            aria-label="Repositorio en GitHub"
           >
             <Github size={16} strokeWidth={1.75} />
           </a>
+
+          {/* Toggle Simple / Completo */}
+          <ModeToggle />
 
           <div className="mx-0.5 hidden h-6 w-px bg-v0-150 dark:bg-v0-800 sm:block" />
 

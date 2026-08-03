@@ -4,6 +4,7 @@
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { useUIMode } from '@/context/UIModeContext';
 
 interface PageHeaderProps {
   title: string;
@@ -17,6 +18,7 @@ interface PageHeaderProps {
 export function PageHeader({
   title, description, icon: Icon, badge, actions, status,
 }: PageHeaderProps) {
+  const { simpleMode } = useUIMode();
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -33,15 +35,17 @@ export function PageHeader({
             <h1 className="text-[34px] font-semibold leading-none tracking-vercel text-v0-950 dark:text-v0-50 sm:text-[40px]">
               {title}
             </h1>
-            {badge && <Pill>{badge}</Pill>}
-            {status && <StatusPill {...status} />}
+            {!simpleMode && badge && <Pill>{badge}</Pill>}
+            {!simpleMode && status && <StatusPill {...status} />}
           </div>
           <p className="mt-3.5 max-w-2xl text-balance text-[14.5px] leading-relaxed text-v0-500/70 dark:text-v0-300/80">
             {description}
           </p>
         </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {!simpleMode && actions && (
+        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      )}
     </motion.div>
   );
 }

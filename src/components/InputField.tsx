@@ -4,7 +4,8 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import { TooltipInfo } from './TooltipInfo';
 
-interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputFieldProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
   label: string;
   hint?: string;
   tooltip?: string;

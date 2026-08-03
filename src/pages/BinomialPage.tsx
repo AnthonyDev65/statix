@@ -16,6 +16,7 @@ import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { TheoryDocs } from '@/components/TheoryDocs';
+import { AdvancedOnly } from '@/components/AdvancedOnly';
 import { ProbabilityChart } from '@/charts';
 import { binomialSchema, type BinomialFormValues } from '@/utils/validators.utils';
 import { calculateBinomial } from '@/services/statistics.service';
@@ -30,7 +31,7 @@ const EXAMPLE: BinomialFormValues = { n: 20, p: 0.3, x: 6 };
 export function BinomialPage() {
   const { add } = useHistory();
   const {
-    register, handleSubmit, formState: { errors },
+    handleSubmit, formState: { errors },
     setValue, watch, reset,
   } = useForm<BinomialFormValues>({
     resolver: zodResolver(binomialSchema),
@@ -124,7 +125,6 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
             className="space-y-5 rounded-xl border border-v0-200/30 bg-v0-50 p-6 dark:border-v0-800/30 dark:bg-v0-900"
           >
             <NumberInput
-              {...register('n')}
               label="Ensayos (n)" hint="int ≥ 1"
               tooltip="Cantidad total de ensayos Bernoulli independientes."
               min={1} max={100000} step={1}
@@ -133,7 +133,6 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
               onValueChange={(v) => setValue('n', v, { shouldValidate: true, shouldDirty: true })}
             />
             <NumberInput
-              {...register('p')}
               label="Probabilidad (p)" hint="0 ≤ p ≤ 1"
               tooltip="Probabilidad constante de éxito en cada ensayo."
               min={0} max={1} step={0.01}
@@ -142,7 +141,6 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
               onValueChange={(v) => setValue('p', v, { shouldValidate: true, shouldDirty: true })}
             />
             <NumberInput
-              {...register('x')}
               label="Éxitos (x)" hint="0 ≤ x ≤ n"
               tooltip="Valor específico de éxitos a evaluar."
               min={0} max={values.n} step={1}
@@ -216,7 +214,7 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
         </Section>
       </div>
 
-      <Section title="Probability mass function" description="Distribución de probabilidad para los posibles valores de X">
+      <Section title="Probability mass function" divider description="Distribución de probabilidad para los posibles valores de X">
         <div className="overflow-hidden rounded-xl border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900">
           <div className="flex items-center justify-between border-b border-v0-150/30 px-5 py-3 dark:border-v0-800/30">
             <div className="flex items-center gap-2.5">
@@ -242,17 +240,19 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
         </div>
       </Section>
 
-      <Section title="Framework" monospaceTitle description="Definiciones y propiedades">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {BINOMIAL_FORMULAS.map((f, i) => (
-            <FormulaCard key={f.id} formula={f} index={i} />
-          ))}
-        </div>
-      </Section>
+      <AdvancedOnly>
+        <Section title="Framework" monospaceTitle divider description="Definiciones y propiedades">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {BINOMIAL_FORMULAS.map((f, i) => (
+              <FormulaCard key={f.id} formula={f} index={i} />
+            ))}
+          </div>
+        </Section>
 
-      <TheoryDocs moduleId="binomial" />
+        <TheoryDocs moduleId="binomial" />
 
-      <HistoryPanel />
+        <HistoryPanel />
+      </AdvancedOnly>
     </div>
   );
 }

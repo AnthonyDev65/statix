@@ -15,6 +15,7 @@ import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { TheoryDocs } from '@/components/TheoryDocs';
+import { AdvancedOnly } from '@/components/AdvancedOnly';
 import { ConfidenceIntervalCard } from '@/components/ConfidenceIntervalCard';
 import { ConfidenceChart } from '@/charts';
 import { CONFIDENCE_LEVELS } from '@/constants';
@@ -175,21 +176,21 @@ IC = [${formatNumber(propDisplay.lowerBound, 4)}, ${formatNumber(propDisplay.upp
                   className="space-y-5 rounded-xl border border-v0-200/30 bg-v0-50 p-6 dark:border-v0-800/30 dark:bg-v0-900"
                 >
                   <NumberInput
-                    {...meanForm.register('n')} label="Muestra (n)"
+                    label="Muestra (n)"
                     tooltip="Número de observaciones." min={2} step={1}
                     value={meanValues.n}
                     onValueChange={(v) => meanForm.setValue('n', v, { shouldValidate: true, shouldDirty: true })}
                     error={meanErrors.n?.message}
                   />
                   <NumberInput
-                    {...meanForm.register('xBar')} label="Media (x̄)"
+                    label="Media (x̄)"
                     tooltip="Promedio observado en la muestra." step={0.01}
                     value={meanValues.xBar}
                     onValueChange={(v) => meanForm.setValue('xBar', v, { shouldValidate: true, shouldDirty: true })}
                     error={meanErrors.xBar?.message}
                   />
                   <NumberInput
-                    {...meanForm.register('s')} label="Desviación (s)"
+                    label="Desviación (s)"
                     tooltip="Desviación estándar muestral." min={0.0001} step={0.01}
                     value={meanValues.s}
                     onValueChange={(v) => meanForm.setValue('s', v, { shouldValidate: true, shouldDirty: true })}
@@ -251,14 +252,14 @@ IC = [${formatNumber(propDisplay.lowerBound, 4)}, ${formatNumber(propDisplay.upp
                   className="space-y-5 rounded-xl border border-v0-200/30 bg-v0-50 p-6 dark:border-v0-800/30 dark:bg-v0-900"
                 >
                   <NumberInput
-                    {...propForm.register('n')} label="Muestra (n)"
+                    label="Muestra (n)"
                     tooltip="Número de ensayos Bernoulli observados." min={1} step={1}
                     value={propValues.n}
                     onValueChange={(v) => propForm.setValue('n', v, { shouldValidate: true, shouldDirty: true })}
                     error={propErrors.n?.message}
                   />
                   <NumberInput
-                    {...propForm.register('pHat')} label="Proporción (p̂)" hint="0 ≤ p̂ ≤ 1"
+                    label="Proporción (p̂)" hint="0 ≤ p̂ ≤ 1"
                     tooltip="Frecuencia relativa de éxito en la muestra." min={0} max={1} step={0.01}
                     value={propValues.pHat}
                     onValueChange={(v) => propForm.setValue('pHat', v, { shouldValidate: true, shouldDirty: true })}
@@ -307,17 +308,19 @@ IC = [${formatNumber(propDisplay.lowerBound, 4)}, ${formatNumber(propDisplay.upp
         )}
       </AnimatePresence>
 
-      <Section title="Framework" monospaceTitle description="Fórmulas utilizadas">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {ESTIMATION_FORMULAS.map((f, i) => (
-            <FormulaCard key={f.id} formula={f} index={i} />
-          ))}
-        </div>
-      </Section>
+      <AdvancedOnly>
+        <Section title="Framework" monospaceTitle divider description="Fórmulas utilizadas">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {ESTIMATION_FORMULAS.map((f, i) => (
+              <FormulaCard key={f.id} formula={f} index={i} />
+            ))}
+          </div>
+        </Section>
 
-      <TheoryDocs moduleId="estimation" />
+        <TheoryDocs moduleId="estimation" />
 
-      <HistoryPanel />
+        <HistoryPanel />
+      </AdvancedOnly>
     </div>
   );
 }

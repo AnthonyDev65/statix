@@ -16,6 +16,7 @@ import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { TheoryDocs } from '@/components/TheoryDocs';
+import { AdvancedOnly } from '@/components/AdvancedOnly';
 import { ProbabilityChart } from '@/charts';
 import {
   hypergeometricSchema, type HypergeometricFormValues,
@@ -32,7 +33,7 @@ const EXAMPLE: HypergeometricFormValues = { N: 100, K: 30, n: 10, x: 3 };
 export function HypergeometricPage() {
   const { add } = useHistory();
   const {
-    register, handleSubmit, formState: { errors },
+    handleSubmit, formState: { errors },
     setValue, watch, reset,
   } = useForm<HypergeometricFormValues>({
     resolver: zodResolver(hypergeometricSchema),
@@ -124,7 +125,6 @@ Varianza: ${formatNumber(display.variance, 4)}`
             className="space-y-5 rounded-xl border border-v0-200/30 bg-v0-50 p-6 dark:border-v0-800/30 dark:bg-v0-900"
           >
             <NumberInput
-              {...register('N')}
               label="Población (N)" hint="int ≥ 1"
               tooltip="Número total de elementos en la población."
               min={1} step={1}
@@ -133,7 +133,6 @@ Varianza: ${formatNumber(display.variance, 4)}`
               error={errors.N?.message}
             />
             <NumberInput
-              {...register('K')}
               label="Éxitos pob. (K)" hint="0 ≤ K ≤ N"
               tooltip="Cantidad de elementos considerados éxito."
               min={0} step={1}
@@ -142,7 +141,6 @@ Varianza: ${formatNumber(display.variance, 4)}`
               error={errors.K?.message}
             />
             <NumberInput
-              {...register('n')}
               label="Muestra (n)" hint="1 ≤ n ≤ N"
               tooltip="Número de elementos extraídos sin reemplazo."
               min={1} step={1}
@@ -151,7 +149,6 @@ Varianza: ${formatNumber(display.variance, 4)}`
               error={errors.n?.message}
             />
             <NumberInput
-              {...register('x')}
               label="Éxitos obs. (x)" hint="0 ≤ x ≤ n, K"
               tooltip="Número de éxitos a evaluar en la muestra."
               min={0} step={1}
@@ -209,7 +206,7 @@ Varianza: ${formatNumber(display.variance, 4)}`
         </Section>
       </div>
 
-      <Section title="Probability mass function" description="Visualización de P(X = x) para x = 0, 1, …, min(n, K)">
+      <Section title="Probability mass function" divider description="Visualización de P(X = x) para x = 0, 1, …, min(n, K)">
         <div className="overflow-hidden rounded-xl border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900">
           <div className="flex items-center justify-between border-b border-v0-150/30 px-5 py-3 dark:border-v0-800/30">
             <div className="flex items-center gap-2.5">
@@ -233,17 +230,19 @@ Varianza: ${formatNumber(display.variance, 4)}`
         </div>
       </Section>
 
-      <Section title="Framework" monospaceTitle description="Definición formal">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {HYPERGEOMETRIC_FORMULAS.map((f, i) => (
-            <FormulaCard key={f.id} formula={f} index={i} />
-          ))}
-        </div>
-      </Section>
+      <AdvancedOnly>
+        <Section title="Framework" monospaceTitle divider description="Definición formal">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {HYPERGEOMETRIC_FORMULAS.map((f, i) => (
+              <FormulaCard key={f.id} formula={f} index={i} />
+            ))}
+          </div>
+        </Section>
 
-      <TheoryDocs moduleId="hypergeometric" />
+        <TheoryDocs moduleId="hypergeometric" />
 
-      <HistoryPanel />
+        <HistoryPanel />
+      </AdvancedOnly>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { TheoryDocs } from '@/components/TheoryDocs';
+import { AdvancedOnly } from '@/components/AdvancedOnly';
 import { DataGrid } from '@/components/DataGrid';
 import { AnovaTable } from '@/components/AnovaTable';
 import { AnovaSteps } from '@/components/AnovaSteps';
@@ -237,17 +238,19 @@ export function AnovaPage() {
         )}
       </AnimatePresence>
 
-      <Section title="Framework" monospaceTitle description="Fórmulas utilizadas">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {ANOVA_FORMULAS.map((f, i) => (
-            <FormulaCard key={f.id} formula={f} index={i} />
-          ))}
-        </div>
-      </Section>
+      <AdvancedOnly>
+        <Section title="Framework" monospaceTitle divider description="Fórmulas utilizadas">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {ANOVA_FORMULAS.map((f, i) => (
+              <FormulaCard key={f.id} formula={f} index={i} />
+            ))}
+          </div>
+        </Section>
 
-      <TheoryDocs moduleId="anova" />
+        <TheoryDocs moduleId="anova" />
 
-      <HistoryPanel />
+        <HistoryPanel />
+      </AdvancedOnly>
     </div>
   );
 }

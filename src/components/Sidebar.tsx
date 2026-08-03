@@ -21,33 +21,46 @@ import type { DistributionType } from '@/types';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Modo simple: el sidebar se colapsa por completo (off-canvas en todos los tamaños). */
+  collapsed?: boolean;
 }
 
 const ICONS: Record<string, LucideIcon> = {
   Sigma, Layers, Activity, Target, TableProperties,
 };
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, collapsed = false }: SidebarProps) {
+  // En modo colapsado el sidebar deja de ser un rail fijo y solo aparece
+  // como panel superpuesto (overlay) al abrirlo desde el botón de menú.
+  const railClasses = collapsed
+    ? ''
+    : 'lg:sticky lg:top-16 lg:z-30 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:self-start lg:overflow-y-auto';
   return (
     <>
-      {/* Overlay (mobile) */}
+      {/* Overlay */}
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-v0-950/60 backdrop-blur-sm lg:hidden"
+          className={`fixed inset-0 z-40 bg-v0-950/60 backdrop-blur-sm ${
+            collapsed ? '' : 'lg:hidden'
+          }`}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-v0-150/30 bg-v0-50 transition-transform duration-300 ease-out dark:border-v0-800/30 dark:bg-v0-950 lg:sticky lg:top-16 lg:z-30 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:self-start lg:overflow-y-auto ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-v0-150/30 bg-v0-50 transition-transform duration-300 ease-out dark:border-v0-800/30 dark:bg-v0-950 ${railClasses} ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Cabecera (mobile) */}
-        <div className="flex h-16 flex-shrink-0 items-center justify-between border-b border-v0-150/30 px-5 dark:border-v0-800/30 lg:hidden">
+        {/* Cabecera del panel (siempre visible cuando es overlay) */}
+        <div
+          className={`flex h-16 flex-shrink-0 items-center justify-between border-b border-v0-150/30 px-5 dark:border-v0-800/30 ${
+            collapsed ? '' : 'lg:hidden'
+          }`}
+        >
           <span className="text-[15px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50">
             Statix
           </span>
@@ -62,7 +75,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Project switcher */}
-        <div className="hidden flex-shrink-0 border-b border-v0-150/30 p-4 dark:border-v0-800/30 lg:block">
+        <div className={`flex-shrink-0 border-b border-v0-150/30 p-4 dark:border-v0-800/30 ${
+          collapsed ? 'hidden' : 'hidden lg:block'
+        }`}>
           <button
             type="button"
             className="group flex w-full items-center gap-3 rounded-md border border-v0-150/30 bg-v0-50 px-3 py-2.5 text-left transition-all duration-200 hover:border-v0-300/60 hover:bg-v0-50 active:scale-[0.99] dark:border-v0-800/30 dark:bg-v0-900 dark:hover:border-v0-700 dark:hover:bg-v0-800/60"
@@ -145,16 +160,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             })}
           </ul>
 
-          <p className="mb-2 mt-6 px-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-v0-400/70 dark:text-v0-500/70">
-            Resources
-          </p>
-          <ul className="space-y-0.5">
-            <ResourceLink to="/docs" icon={BookOpen} label="Documentación" badge="docs" onClose={onClose} />
-            <ResourceLink to="/changelog" icon={GitCommitVertical} label="Changelog" badge="v1.2" onClose={onClose} />
-          </ul>
+          {!collapsed && (
+            <>
+              <p className="mb-2 mt-6 px-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-v0-400/70 dark:text-v0-500/70">
+                Resources
+              </p>
+              <ul className="space-y-0.5">
+                <ResourceLink to="/docs" icon={BookOpen} label="Documentación" badge="docs" onClose={onClose} />
+                <ResourceLink to="/changelog" icon={GitCommitVertical} label="Changelog" badge="v1.2" onClose={onClose} />
+              </ul>
+            </>
+          )}
         </nav>
 
         {/* Footer con status */}
+        {!collapsed && (
         <div className="flex-shrink-0 border-t border-v0-150/30 px-4 py-3 dark:border-v0-800/30">
           <div className="flex items-center justify-between px-1 py-1">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-v0-400/70 dark:text-v0-500/70">
@@ -177,6 +197,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </span>
           </div>
         </div>
+        )}
       </aside>
     </>
   );

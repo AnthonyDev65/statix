@@ -31,9 +31,6 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     {
       label, hint, tooltip, error, value, onValueChange,
       min, max, step = 1, suffix, prefix,
-      // Descartamos onChange (lo gestiona onValueChange). Si llega vía
-      // {...register(...)} de react-hook-form, NO debe pisar el control interno.
-      onChange: _ignoredOnChange,
       ...rest
     },
     ref,
@@ -65,7 +62,11 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     }, [value]);
 
     const handleStep = (delta: number) => {
-      const next = clamp((Number.isFinite(value) ? value : 0) + delta * step);
+      const base = Number.isFinite(value) ? value : 0;
+      // Redondea a la precisión del paso para evitar artefactos de coma
+      // flotante (p. ej. 0.05 + 0.01 = 0.06000000000000005).
+      const decimals = (String(step).split('.')[1] ?? '').length;
+      const next = clamp(Number((base + delta * step).toFixed(decimals)));
       setText(String(next));
       onValueChange(next);
     };

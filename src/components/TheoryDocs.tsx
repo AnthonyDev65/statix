@@ -26,7 +26,7 @@ export function TheoryDocs({ moduleId }: TheoryDocsProps) {
   if (!mod) return null;
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 border-t border-v0-200/40 pt-11 dark:border-v0-800/40">
       <header>
         <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-v0-500/70 dark:text-v0-300/80">
           /docs
