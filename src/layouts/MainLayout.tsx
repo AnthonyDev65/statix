@@ -4,6 +4,7 @@
 import { useState, type ReactNode } from 'react';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
+import { ScrollToHash } from '@/components/ScrollToHash';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <div className="min-h-screen bg-v0-50 text-v0-950 dark:bg-v0-950 dark:text-v0-50">
+      <ScrollToHash />
       <Header onMenuClick={() => setSidebarOpen(true)} />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />

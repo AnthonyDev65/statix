@@ -1,17 +1,34 @@
 // =====================================================
 // Statix — Header (Vercel-style)
 // =====================================================
+import { useEffect, useState } from 'react';
 import { Menu, Search, Github } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { APP_NAME, APP_TAGLINE } from '@/constants';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { SearchModal } from '@/components/SearchModal';
 
 interface HeaderProps {
   onMenuClick?: () => void;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Atajo global ⌘K / Ctrl+K para abrir el buscador de teoría.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   return (
+    <>
     <header className="sticky top-0 z-40 w-full border-b border-v0-150/30 bg-v0-50/80 backdrop-blur-md dark:border-v0-800/30 dark:bg-v0-950/80">
       <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-5 sm:px-7 lg:px-10">
         {/* Botón menú mobile */}
@@ -50,21 +67,29 @@ export function Header({ onMenuClick }: HeaderProps) {
         </span>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
-          {/* Command palette hint */}
+          {/* Buscador de teoría (desktop) */}
           <button
             type="button"
-            onClick={() => {
-              // Placeholder: command palette trigger
-            }}
+            onClick={() => setSearchOpen(true)}
             className="hidden h-9 items-center gap-2 rounded-md border border-v0-150/30 bg-v0-50 px-3 font-mono text-[11.5px] text-v0-500/70 transition-all duration-200 hover:border-v0-300/60 hover:bg-v0-50 hover:text-v0-800 active:scale-[0.98] dark:border-v0-800/30 dark:bg-v0-900 dark:text-v0-300/80 dark:hover:border-v0-700 dark:hover:bg-v0-800 dark:hover:text-v0-200 sm:inline-flex"
-            aria-label="Buscar"
+            aria-label="Buscar en la documentación"
           >
             <Search size={12} strokeWidth={2} />
-            <span>Search</span>
+            <span>Buscar teoría</span>
             <span className="ml-2 flex items-center gap-0.5">
               <Kbd>⌘</Kbd>
               <Kbd>K</Kbd>
             </span>
+          </button>
+
+          {/* Buscador (mobile, solo icono) */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-v0-500/70 transition-all duration-200 hover:bg-v0-75 hover:text-v0-900 active:scale-95 dark:text-v0-300/80 dark:hover:bg-v0-900 dark:hover:text-v0-100 sm:hidden"
+            aria-label="Buscar en la documentación"
+          >
+            <Search size={18} strokeWidth={1.9} />
           </button>
 
           {/* Status badge — Vercel style: dot pulsante + texto mono */}
@@ -91,6 +116,8 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
       </div>
     </header>
+    <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 }
 

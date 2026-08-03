@@ -15,6 +15,7 @@ import { FormulaCard } from '@/components/FormulaCard';
 import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
+import { TheoryDocs } from '@/components/TheoryDocs';
 import { ProbabilityChart } from '@/charts';
 import {
   hypergeometricSchema, type HypergeometricFormValues,
@@ -239,6 +240,8 @@ Varianza: ${formatNumber(display.variance, 4)}`
           ))}
         </div>
       </Section>
+
+      <TheoryDocs moduleId="hypergeometric" />
 
       <HistoryPanel />
     </div>

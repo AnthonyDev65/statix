@@ -15,6 +15,7 @@ import { FormulaCard } from '@/components/FormulaCard';
 import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
+import { TheoryDocs } from '@/components/TheoryDocs';
 import { ProbabilityChart } from '@/charts';
 import { binomialSchema, type BinomialFormValues } from '@/utils/validators.utils';
 import { calculateBinomial } from '@/services/statistics.service';
@@ -248,6 +249,8 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
           ))}
         </div>
       </Section>
+
+      <TheoryDocs moduleId="binomial" />
 
       <HistoryPanel />
     </div>

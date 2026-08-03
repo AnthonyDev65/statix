@@ -15,6 +15,7 @@ import { FormulaCard } from '@/components/FormulaCard';
 import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
+import { TheoryDocs } from '@/components/TheoryDocs';
 import { DistributionChart } from '@/charts';
 import { normalSchema, type NormalFormValues } from '@/utils/validators.utils';
 import { calculateNormal } from '@/services/statistics.service';
@@ -269,6 +270,8 @@ Probabilidad: ${formatNumber(display.probability, 6)} (${formatProbability(displ
           ))}
         </div>
       </Section>
+
+      <TheoryDocs moduleId="normal" />
 
       <HistoryPanel />
     </div>

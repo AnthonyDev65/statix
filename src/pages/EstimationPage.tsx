@@ -14,6 +14,7 @@ import { FormulaCard } from '@/components/FormulaCard';
 import { ActionBar } from '@/components/ActionBar';
 import { ExportButton } from '@/components/ExportButton';
 import { HistoryPanel } from '@/components/HistoryPanel';
+import { TheoryDocs } from '@/components/TheoryDocs';
 import { ConfidenceIntervalCard } from '@/components/ConfidenceIntervalCard';
 import { ConfidenceChart } from '@/charts';
 import { CONFIDENCE_LEVELS } from '@/constants';
@@ -313,6 +314,8 @@ IC = [${formatNumber(propDisplay.lowerBound, 4)}, ${formatNumber(propDisplay.upp
           ))}
         </div>
       </Section>
+
+      <TheoryDocs moduleId="estimation" />
 
       <HistoryPanel />
     </div>
