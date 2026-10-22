@@ -2,10 +2,12 @@
 // Statix — BinomialPage
 // =====================================================
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, Sigma, TrendingUp, Activity, Percent } from 'lucide-react';
+import { Sigma, Activity, Percent } from 'lucide-react';
+import { Panel, EmptyResult, ChartPanel } from '@/components/Panel';
 import { PageHeader } from '@/components/PageHeader';
 import { Section } from '@/components/Section';
 import { NumberInput } from '@/components/NumberInput';
@@ -22,20 +24,33 @@ import { binomialSchema, type BinomialFormValues } from '@/utils/validators.util
 import { calculateBinomial } from '@/services/statistics.service';
 import { BINOMIAL_FORMULAS } from '@/formulas/formulas';
 import { useHistory } from '@/context/HistoryContext';
-import { formatNumber, formatProbability } from '@/utils/formatters.utils';
+import { formatNumber, formatProbability, frequencyPhrase } from '@/utils/formatters.utils';
 import type { BinomialResults } from '@/types';
 
 const DEFAULTS: BinomialFormValues = { n: 10, p: 0.5, x: 4 };
 const EXAMPLE: BinomialFormValues = { n: 20, p: 0.3, x: 6 };
 
+/** Lee n, p y x de la URL (p. ej. desde el tablero de Galton de la portada). */
+function defaultsFromParams(params: URLSearchParams): BinomialFormValues {
+  if (!params.has('n')) return DEFAULTS;
+  const parsed = binomialSchema.safeParse({
+    n: Number(params.get('n')),
+    p: Number(params.get('p') ?? DEFAULTS.p),
+    x: Number(params.get('x') ?? 0),
+  });
+  return parsed.success ? parsed.data : DEFAULTS;
+}
+
 export function BinomialPage() {
   const { add } = useHistory();
+  const [params] = useSearchParams();
+  const [initial] = useState(() => defaultsFromParams(params));
   const {
     handleSubmit, formState: { errors },
     setValue, watch, reset,
   } = useForm<BinomialFormValues>({
     resolver: zodResolver(binomialSchema),
-    defaultValues: DEFAULTS,
+    defaultValues: initial,
     mode: 'onChange',
   });
   const [results, setResults] = useState<BinomialResults | null>(null);
@@ -113,19 +128,16 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
         title="Distribución Binomial"
         description="Modela el número de éxitos en n ensayos independientes con probabilidad de éxito constante p. Útil para control de calidad, ensayos clínicos y experimentos Bernoulli."
         icon={Sigma}
-        badge="B(n, p) · discrete"
-        status={{ label: 'Ready', tone: 'ready' }}
-        actions={display && <ExportButton payload={pdfPayload} summary={summary} label="Export" />}
+        badge="B(n, p)"
+        actions={display && <ExportButton payload={pdfPayload} summary={summary} label="Exportar" />}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1.05fr_1.4fr]">
-        <Section title="Parameters" monospaceTitle description="Define los datos del experimento">
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-5 rounded-xl border border-v0-200/30 bg-v0-50 p-6 dark:border-v0-800/30 dark:bg-v0-900"
-          >
+        <Section title="Datos del problema" alwaysShowHeader description="Repites un mismo intento n veces; cada vez sale bien con probabilidad p.">
+          <Panel>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <NumberInput
-              label="Ensayos (n)" hint="int ≥ 1"
+              label="Ensayos (n)" hint="entero ≥ 1"
               tooltip="Cantidad total de ensayos Bernoulli independientes."
               min={1} max={100000} step={1}
               error={errors.n?.message}
@@ -148,16 +160,17 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
               value={values.x}
               onValueChange={(v) => setValue('x', v, { shouldValidate: true, shouldDirty: true })}
             />
-            <div className="border-t border-v0-150/30 pt-5 dark:border-v0-800/30">
+            <div className="pt-2">
               <ActionBar
                 onExample={onExample} onReset={onReset}
                 onSubmit={handleSubmit(onSubmit)}
               />
             </div>
           </form>
+          </Panel>
         </Section>
 
-        <Section title="Output" monospaceTitle description="Métricas calculadas en tiempo real">
+        <Section title="Resultados" alwaysShowHeader description="Se actualizan mientras escribes.">
           <AnimatePresence mode="wait">
             {display ? (
               <motion.div
@@ -165,26 +178,28 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="space-y-4"
+                className="space-y-3"
               >
-                <div className="grid gap-3 sm:grid-cols-3">
+                <ResultCard
+                  emphasis
+                  label={`Exactamente ${values.x} éxitos`}
+                  meta={`P(X = ${values.x})`}
+                  value={formatNumber(display.probabilityExact, 4)}
+                  description={formatProbability(display.probabilityExact, 2)}
+                  interpretation={`Si repites el experimento muchas veces, pasará ${frequencyPhrase(display.probabilityExact)}.`}
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
                   <ResultCard
-                    label="P(X = x)" value={formatNumber(display.probabilityExact, 4)}
-                    description={formatProbability(display.probabilityExact, 4)}
-                    icon={Calculator} meta={`x = ${values.x}`}
-                    interpretation="Probabilidad exacta de obtener exactamente x éxitos."
+                    label={`Como mucho ${values.x}`} meta={`P(X ≤ ${values.x})`}
+                    value={formatNumber(display.probabilityLessEqual, 4)}
+                    description={formatProbability(display.probabilityLessEqual, 2)}
+                    interpretation={`${values.x} éxitos o menos.`}
                   />
                   <ResultCard
-                    label="P(X ≤ x)" value={formatNumber(display.probabilityLessEqual, 4)}
-                    description={formatProbability(display.probabilityLessEqual, 4)}
-                    icon={TrendingUp} meta="cumulative"
-                    interpretation="Probabilidad acumulada hasta x éxitos."
-                  />
-                  <ResultCard
-                    label="P(X ≥ x)" value={formatNumber(display.probabilityGreaterEqual, 4)}
-                    description={formatProbability(display.probabilityGreaterEqual, 4)}
-                    icon={Activity} meta="upper tail"
-                    interpretation="Probabilidad de obtener al menos x éxitos."
+                    label={`Al menos ${values.x}`} meta={`P(X ≥ ${values.x})`}
+                    value={formatNumber(display.probabilityGreaterEqual, 4)}
+                    description={formatProbability(display.probabilityGreaterEqual, 2)}
+                    interpretation={`${values.x} éxitos o más.`}
                   />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
@@ -194,54 +209,24 @@ Desviación: ${formatNumber(display.stdDev, 4)}`
                 </div>
               </motion.div>
             ) : (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center rounded-xl border border-dashed border-v0-300/20 bg-v0-50 px-6 py-16 text-center dark:border-v0-700/30 dark:bg-v0-900"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-md border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900">
-                  <Calculator size={16} strokeWidth={1.75} className="text-v0-500/70 dark:text-v0-300/80" />
-                </div>
-                <p className="mt-4 text-[14px] font-medium text-v0-900 dark:text-v0-100">
-                  Introduce parámetros válidos
-                </p>
-                <p className="mt-1.5 max-w-xs font-mono text-[11.5px] text-v0-500/70 dark:text-v0-300/80">
-                  output will appear here once all params are valid
-                </p>
-              </motion.div>
+              <EmptyResult />
             )}
           </AnimatePresence>
         </Section>
       </div>
 
-      <Section title="Probability mass function" divider description="Distribución de probabilidad para los posibles valores de X">
-        <div className="overflow-hidden rounded-xl border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900">
-          <div className="flex items-center justify-between border-b border-v0-150/30 px-5 py-3 dark:border-v0-800/30">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-500/60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              </span>
-              <span className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-v0-500/70 dark:text-v0-300/80">
-                pmf.chart
-              </span>
-            </div>
-            <span className="font-mono text-[10.5px] text-v0-500/70 dark:text-v0-500/70">
-              x ∈ [0, {Math.min(values.n, 1000)}]
-            </span>
-          </div>
-          <div className="p-3">
-            {display ? (
-              <ProbabilityChart data={display.distribution} highlightX={values.x} height={320} />
-            ) : (
-              <div className="h-[320px]" />
-            )}
-          </div>
-        </div>
+      <Section title="Distribución de probabilidad" alwaysShowHeader description="Cada barra es la probabilidad de obtener ese número de éxitos.">
+        <ChartPanel caption={`La barra resaltada es x = ${values.x}. Se muestran los valores de 0 a ${Math.min(values.n, 1000)}.`}>
+          {display ? (
+            <ProbabilityChart data={display.distribution} highlightX={values.x} height={320} />
+          ) : (
+            <div className="h-[320px]" />
+          )}
+        </ChartPanel>
       </Section>
 
       <AdvancedOnly>
-        <Section title="Framework" monospaceTitle divider description="Definiciones y propiedades">
+        <Section title="Fórmulas" divider description="Definiciones y propiedades">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {BINOMIAL_FORMULAS.map((f, i) => (
               <FormulaCard key={f.id} formula={f} index={i} />

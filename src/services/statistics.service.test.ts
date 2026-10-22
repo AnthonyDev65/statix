@@ -150,3 +150,165 @@ describe('ANOVA degenerate zero-variance cases', () => {
     });
   });
 });
+
+import {
+  binomialPmf, binomialCdf, binomialSurvival,
+  hypergeometricPmf, hypergeometricCdf, hypergeometricSurvival,
+  calculateNormal, calculateMeanEstimation, calculateMeanEstimationCentered,
+  calculateProportionEstimation, isBalancedDesign,
+} from '@/services/statistics.service';
+
+const expectRel = (a: number, b: number, tol: number) => {
+  expect(Math.abs(a - b)).toBeLessThanOrEqual(tol * Math.abs(b));
+};
+
+describe('binomial con n grande (regresión de desbordamiento)', () => {
+  it('binomialPmf(200, 0.5, 100) = 0.0563484790…', () => {
+    expectRel(binomialPmf(200, 0.5, 100), 0.056348479009256436, 1e-10);
+  });
+  it('n = 5000', () => {
+    expectRel(binomialPmf(5000, 0.5, 2500), 0.011283227495479858, 1e-9);
+    expectRel(binomialPmf(5000, 0.2, 1000), 0.014103505478012498, 1e-9);
+  });
+  it('p = 0 y p = 1 exactos', () => {
+    expect(binomialPmf(10, 0, 0)).toBe(1);
+    expect(binomialPmf(10, 0, 3)).toBe(0);
+    expect(binomialPmf(10, 1, 10)).toBe(1);
+    expect(binomialPmf(10, 1, 9)).toBe(0);
+    expect(binomialCdf(10, 0, 0)).toBe(1);
+    expect(binomialSurvival(10, 1, 10)).toBe(1);
+  });
+  it('cola superior sumada directamente (sin 1 − CDF)', () => {
+    // P(X ≥ 170 | n=200, p=0.5) = 3.0866e−25 ; 1 − cdf daría 0
+    expectRel(binomialSurvival(200, 0.5, 170), 3.086567678106935e-25, 1e-8);
+    expectRel(binomialCdf(200, 0.5, 30), 3.086567678106935e-25, 1e-8);
+  });
+  it('CDF y supervivencia en [0, 1] y complementarias', () => {
+    const c = binomialCdf(200, 0.3, 60);
+    const s = binomialSurvival(200, 0.3, 61);
+    expect(c).toBeLessThanOrEqual(1);
+    expect(s).toBeGreaterThanOrEqual(0);
+    expect(c + s).toBeCloseTo(1, 12);
+    expect(binomialSurvival(20, 0.4, 0)).toBe(1);
+    expect(binomialCdf(20, 0.4, 20)).toBe(1);
+  });
+});
+
+describe('hipergeométrica con N grande', () => {
+  it('hypergeometricPmf(500, 100, 50, 10) ≈ 0.147368 (antes NaN)', () => {
+    expectRel(hypergeometricPmf(500, 100, 50, 10), 0.14736784420411747, 1e-9);
+  });
+  it('N = 5000', () => {
+    expectRel(hypergeometricPmf(5000, 1000, 500, 100), 0.04697422123365405, 1e-9);
+    expectRel(hypergeometricSurvival(5000, 1000, 500, 150), 1.1800782329147414e-8, 1e-7);
+  });
+  it('CDF + supervivencia = 1 y respeta el soporte', () => {
+    const c = hypergeometricCdf(500, 100, 50, 9);
+    const s = hypergeometricSurvival(500, 100, 50, 10);
+    expect(c + s).toBeCloseTo(1, 12);
+    // soporte: x ≥ n − (N − K) = 8
+    expect(hypergeometricCdf(10, 8, 10, 7)).toBe(0);
+    expect(hypergeometricSurvival(10, 8, 10, 8)).toBe(1);
+  });
+});
+
+describe('calculateNormal — cola derecha con función complementaria', () => {
+  it('P(X > μ + 8σ) ≈ 6.221e−16', () => {
+    const r = calculateNormal({ mu: 10, sigma: 2, x: 26, mode: 'right-tail' });
+    expectRel(r.probability, 6.22096057427174e-16, 1e-6);
+  });
+  it('between en la cola derecha no pierde precisión', () => {
+    const r = calculateNormal({ mu: 0, sigma: 1, x: 7, x2: 8, mode: 'between' });
+    // Φ(8) − Φ(7) = Q(7) − Q(8)
+    expectRel(r.probability, 1.279812543885835e-12 - 6.22096057427174e-16, 1e-6);
+  });
+});
+
+describe('IC de la media con t de Student', () => {
+  it('por defecto usa t con n − 1 gl (n=10, 95 % → t = 2.262157)', () => {
+    const r = calculateMeanEstimation({ n: 10, xBar: 50, s: 4, confidence: 0.95 });
+    expect(r.criticalKind).toBe('t');
+    expect(r.df).toBe(9);
+    expect(r.critical).toBeCloseTo(2.262157, 6);
+    expect(r.zCritical).toBe(r.critical); // compatibilidad hacia atrás
+    expect(r.marginOfError).toBeCloseTo(2.262157 * 4 / Math.sqrt(10), 5);
+  });
+  it('sigmaKnown = true usa z', () => {
+    const r = calculateMeanEstimation({ n: 10, xBar: 50, s: 4, confidence: 0.95, sigmaKnown: true });
+    expect(r.criticalKind).toBe('z');
+    expect(r.df).toBeUndefined();
+    expect(r.critical).toBeCloseTo(1.959964, 6);
+  });
+  it('n = 31 → t(0.975, 30) = 2.042272 y límites centrados', () => {
+    const r = calculateMeanEstimationCentered({ n: 31, xBar: 100, s: 10, confidence: 0.95 });
+    expect(r.critical).toBeCloseTo(2.042272, 6);
+    expect(r.upperBound - r.center).toBeCloseTo(r.marginOfError, 12);
+    expect(r.center - r.lowerBound).toBeCloseTo(r.marginOfError, 12);
+  });
+});
+
+describe('IC de la proporción: Wald recortado + Wilson', () => {
+  it('Wilson con valores de referencia (n=100, p̂=0.5, 95 %)', () => {
+    const r = calculateProportionEstimation({ n: 100, pHat: 0.5, confidence: 0.95 });
+    expect(r.criticalKind).toBe('z');
+    expect(r.wilsonLower).toBeCloseTo(0.403831, 5);
+    expect(r.wilsonUpper).toBeCloseTo(0.596169, 5);
+    expect(r.waldClamped).toBe(false);
+    expect(r.lowerBound).toBeCloseTo(0.5 - 1.959964 * 0.05, 5);
+  });
+  it('Wilson asimétrico (n=20, p̂=0.1) y Wald recortado a [0, 1]', () => {
+    const r = calculateProportionEstimation({ n: 20, pHat: 0.1, confidence: 0.95 });
+    expect(r.wilsonLower).toBeCloseTo(0.0278665, 5);
+    expect(r.wilsonUpper).toBeCloseTo(0.3010336, 5);
+    expect(r.lowerBound).toBe(0);
+    expect(r.waldClamped).toBe(true);
+  });
+  it('p̂ = 0: Wald degenera, Wilson no', () => {
+    const r = calculateProportionEstimation({ n: 30, pHat: 0, confidence: 0.95 });
+    expect(r.lowerBound).toBe(0);
+    expect(r.wilsonLower).toBe(0);
+    expect(r.wilsonUpper).toBeGreaterThan(0.1);
+  });
+});
+
+describe('Tukey: metadatos de la tabla', () => {
+  const mk = (k: number) => Array.from({ length: k }, (_, i) => ({
+    label: `G${i + 1}`, values: [i, i + 1, i + 2],
+  }));
+  it('k ≤ 10 y α = 0.05: tabla, sin aviso', () => {
+    const r = tukeyHSD(mk(4), 1, 8, 0.05);
+    expect(r.approximate).toBe(false);
+    expect(r.outOfTable).toBe(false);
+    expect(r.qMethod).toBe('table');
+    expect(r.warning).toBeUndefined();
+  });
+  it('k = 12: cálculo numérico con aviso en español', () => {
+    const r = tukeyHSD(mk(12), 1, 24, 0.05);
+    expect(r.outOfTable).toBe(true);
+    expect(r.qMethod).toBe('numeric');
+    expect(r.warning).toMatch(/tabla/);
+    expect(r.comparisons).toHaveLength(66);
+  });
+});
+
+describe('ANOVA dos factores: diseño balanceado', () => {
+  it('isBalancedDesign', () => {
+    expect(isBalancedDesign([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])).toBe(true);
+    expect(isBalancedDesign([[[1, 2], [3]], [[5, 6], [7, 8]]])).toBe(false);
+    expect(isBalancedDesign([[[1], []], [[5], [7]]])).toBe(false);
+    expect(isBalancedDesign([[[1], [2]], [[5]]])).toBe(false);
+    expect(isBalancedDesign([])).toBe(false);
+  });
+  it('lanza Error con mensaje en español si las réplicas difieren', () => {
+    expect(() => calculateAnovaTwoWay([[[1, 2], [3]], [[5, 6], [7, 8]]], 0.05, ['a', 'b'], ['c', 'd']))
+      .toThrow(/balanceado/);
+  });
+  it('lanza Error si hay una celda vacía', () => {
+    expect(() => calculateAnovaTwoWay([[[1], []], [[5], [7]]], 0.05, ['a', 'b'], ['c', 'd']))
+      .toThrow(/celda \(fila 1, columna 2\) está vacía/);
+  });
+  it('lanza Error si las filas tienen distinto nº de columnas', () => {
+    expect(() => calculateAnovaTwoWay([[[1], [2]], [[5]]], 0.05, ['a', 'b'], ['c', 'd']))
+      .toThrow(/fila 2/);
+  });
+});

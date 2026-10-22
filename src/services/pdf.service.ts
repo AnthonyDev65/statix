@@ -1,7 +1,7 @@
 // =====================================================
 // Statix - Servicio de exportación a PDF
 // =====================================================
-import jsPDF from 'jspdf';
+// jsPDF se carga bajo demanda (import dinámico) para no inflar el bundle inicial.
 
 export interface PdfSection {
   title: string;
@@ -20,7 +20,8 @@ export interface PdfPayload {
  * minimalista: cabecera con color de marca, tipografía sans, separadores
  * sutiles y un pie de página con la fecha.
  */
-export function exportToPdf(payload: PdfPayload): void {
+export async function exportToPdf(payload: PdfPayload): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();

@@ -26,17 +26,14 @@ export function TheoryDocs({ moduleId }: TheoryDocsProps) {
   if (!mod) return null;
 
   return (
-    <section className="space-y-6 border-t border-v0-200/40 pt-11 dark:border-v0-800/40">
+    <section className="space-y-6 pt-8">
       <header>
-        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-v0-500/70 dark:text-v0-300/80">
-          /docs
-        </p>
-        <h2 className="mt-2.5 flex items-center gap-2.5 text-[24px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50">
-          <BookOpen size={20} strokeWidth={1.75} className="text-v0-700 dark:text-v0-300" />
-          Teoría y documentación
+        <h2 className="flex items-center gap-2.5 text-[22px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50">
+          <BookOpen size={20} strokeWidth={1.75} className="text-v0-700 dark:text-v0-300" aria-hidden="true" />
+          Teoría paso a paso
         </h2>
-        <p className="mt-1.5 max-w-2xl text-[13.5px] leading-relaxed text-v0-500/70 dark:text-v0-300/80">
-          {mod.tagline} Usa el buscador del encabezado (⌘K) para saltar a cualquier tema.
+        <p className="mt-1.5 max-w-[65ch] text-[15px] leading-relaxed text-v0-600 dark:text-v0-300">
+          {mod.tagline} Usa «Buscar un concepto» (Ctrl K) para saltar a cualquier tema.
         </p>
       </header>
 
@@ -57,11 +54,11 @@ function ArticleCard({ article, index }: { article: TheoryArticle; index: number
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.35, delay: (index % 4) * 0.04 }}
-      className="scroll-mt-24 overflow-hidden rounded-xl border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900"
+      className="scroll-mt-24 overflow-hidden rounded-xl border border-v0-150 bg-v0-50 dark:border-v0-800 dark:bg-v0-900"
     >
-      <div className="flex items-center gap-2.5 border-b border-v0-150/30 px-5 py-3 dark:border-v0-800/30">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-950">
-          <Hash size={11} strokeWidth={2} className="text-v0-500/70 dark:text-v0-300/80" />
+      <div className="flex items-center gap-2.5 border-b border-v0-150 px-5 py-3 dark:border-v0-800">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-v0-150 bg-v0-50 dark:border-v0-800 dark:bg-v0-950">
+          <Hash size={11} strokeWidth={2} className="text-v0-500 dark:text-v0-300" />
         </span>
         <h3 className="text-[15px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50">
           {article.title}
@@ -90,26 +87,26 @@ function Block({ block }: { block: TheoryBlock }) {
 
     case 'params':
       return (
-        <div className="overflow-hidden rounded-lg border border-v0-150/30 dark:border-v0-800/30">
+        <div className="overflow-hidden rounded-lg border border-v0-150 dark:border-v0-800">
           {block.items.map((p, i) => (
             <div
               key={p.symbol}
               className={`flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:gap-4 ${
-                i > 0 ? 'border-t border-v0-150/30 dark:border-v0-800/30' : ''
+                i > 0 ? 'border-t border-v0-150 dark:border-v0-800' : ''
               }`}
             >
               <div className="flex w-40 flex-shrink-0 items-baseline gap-2">
-                <span className="inline-flex min-w-[2rem] items-center justify-center rounded-md bg-v0-950 px-2 py-0.5 font-mono text-[12px] font-semibold text-v0-50 dark:bg-v0-50 dark:text-v0-950">
+                <span className="inline-flex min-w-[2rem] items-center justify-center rounded-md bg-v0-950 px-2 py-0.5 text-[13px] font-semibold text-v0-50 dark:bg-v0-50 dark:text-v0-950">
                   {p.symbol}
                 </span>
-                <span className="text-[12.5px] font-medium text-v0-800 dark:text-v0-200">
+                <span className="text-[13px] font-medium text-v0-800 dark:text-v0-200">
                   {p.name}
                 </span>
               </div>
-              <div className="flex-1 text-[12.5px] leading-relaxed text-v0-500/80 dark:text-v0-300/80">
+              <div className="flex-1 text-[13px] leading-relaxed text-v0-500/80 dark:text-v0-300">
                 <MathText>{p.description}</MathText>
                 {p.constraint && (
-                  <span className="ml-1.5 inline-block rounded border border-v0-150/30 px-1.5 py-px font-mono text-[10.5px] text-v0-500/70 dark:border-v0-800/30 dark:text-v0-400">
+                  <span className="ml-1.5 inline-block rounded border border-v0-150 px-1.5 py-px text-[13px] text-v0-500 dark:border-v0-800 dark:text-v0-300">
                     <MathText>{p.constraint}</MathText>
                   </span>
                 )}
@@ -124,7 +121,7 @@ function Block({ block }: { block: TheoryBlock }) {
         <ol className="space-y-2">
           {block.items.map((item, i) => (
             <li key={i} className="flex gap-3 text-[13.5px] leading-relaxed text-v0-600 dark:text-v0-300">
-              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-v0-100 font-mono text-[11px] font-semibold text-v0-700 dark:bg-v0-800 dark:text-v0-200">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-v0-100 text-[13px] font-semibold text-v0-700 dark:bg-v0-800 dark:text-v0-200">
                 {i + 1}
               </span>
               <span className="pt-px"><MathText>{item}</MathText></span>
@@ -150,7 +147,7 @@ function Block({ block }: { block: TheoryBlock }) {
         <div className="overflow-hidden rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04] dark:border-emerald-500/20 dark:bg-emerald-500/[0.06]">
           <div className="flex items-center gap-2 border-b border-emerald-500/15 px-4 py-2.5">
             <FlaskConical size={13} strokeWidth={1.9} className="text-emerald-600 dark:text-emerald-400" />
-            <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.07em] text-emerald-700 dark:text-emerald-400">
+            <span className=" text-[13px] font-semibold text-emerald-700 dark:text-emerald-400">
               Ejemplo resuelto
             </span>
           </div>
@@ -160,16 +157,16 @@ function Block({ block }: { block: TheoryBlock }) {
             </p>
             <ol className="space-y-1.5">
               {block.steps.map((s, i) => (
-                <li key={i} className="flex gap-2.5 text-[12.5px] leading-relaxed text-v0-600 dark:text-v0-300">
-                  <span className="font-mono text-[11px] text-emerald-600/80 dark:text-emerald-400/80">
+                <li key={i} className="flex gap-2.5 text-[13px] leading-relaxed text-v0-600 dark:text-v0-300">
+                  <span className=" text-[13px] text-emerald-600/80 dark:text-emerald-400/80">
                     {i + 1}.
                   </span>
                   <span><MathText>{s}</MathText></span>
                 </li>
               ))}
             </ol>
-            <div className="rounded-md border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2 font-mono text-[12.5px] font-medium text-emerald-800 dark:text-emerald-300">
-              ✓ {block.result}
+            <div className="rounded-md border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2 text-[13px] font-medium text-emerald-800 dark:text-emerald-300">
+              {block.result}
             </div>
           </div>
         </div>
@@ -193,7 +190,7 @@ const CALLOUT_STYLES = {
   },
   note: {
     icon: Info,
-    box: 'border-v0-300/30 bg-v0-100/40 dark:border-v0-700/40 dark:bg-v0-800/30',
+    box: 'border-v0-300 bg-v0-100/40 dark:border-v0-800 dark:bg-v0-800/30',
     accent: 'text-v0-600 dark:text-v0-300',
   },
 } as const;
@@ -206,11 +203,11 @@ function Callout({ block }: { block: Extract<TheoryBlock, { kind: 'callout' }> }
       <Icon size={15} strokeWidth={1.9} className={`mt-0.5 flex-shrink-0 ${style.accent}`} />
       <div>
         {block.title && (
-          <p className={`mb-0.5 text-[12.5px] font-semibold ${style.accent}`}>
+          <p className={`mb-0.5 text-[13px] font-semibold ${style.accent}`}>
             {block.title}
           </p>
         )}
-        <p className="text-[12.5px] leading-relaxed text-v0-600 dark:text-v0-300">
+        <p className="text-[13px] leading-relaxed text-v0-600 dark:text-v0-300">
           <MathText>{block.text}</MathText>
         </p>
       </div>
@@ -236,10 +233,10 @@ function BlockMath({ latex, caption }: { latex: string; caption?: string }) {
   }, [latex]);
 
   return (
-    <figure className="overflow-hidden rounded-lg border border-v0-150/30 bg-v0-75/40 dark:border-v0-800/30 dark:bg-v0-950/40">
+    <figure className="overflow-hidden rounded-lg border border-v0-150 bg-v0-75/40 dark:border-v0-800 dark:bg-v0-950/40">
       <div ref={ref} className="overflow-x-auto px-4 py-4 text-[15px] text-v0-950 dark:text-v0-50" />
       {caption && (
-        <figcaption className="border-t border-v0-150/30 px-4 py-2 text-[11.5px] leading-relaxed text-v0-500/70 dark:border-v0-800/30 dark:text-v0-400">
+        <figcaption className="border-t border-v0-150 px-4 py-2 text-[13px] leading-relaxed text-v0-500 dark:border-v0-800 dark:text-v0-300">
           <MathText>{caption}</MathText>
         </figcaption>
       )}

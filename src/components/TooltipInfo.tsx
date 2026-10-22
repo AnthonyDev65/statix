@@ -20,10 +20,12 @@ export function TooltipInfo({ content, children }: TooltipInfoProps) {
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-sm text-v0-400/70 transition-colors hover:text-v0-700 focus:text-v0-700 dark:text-v0-500/70 dark:hover:text-v0-300"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="-m-1.5 inline-flex h-7 w-7 items-center justify-center rounded-md text-v0-500 transition-colors hover:text-v0-900 focus:text-v0-900 dark:text-v0-300 dark:hover:text-v0-300"
         aria-label="Más información"
       >
-        {children ?? <Info size={11} strokeWidth={2} />}
+        {children ?? <Info size={14} strokeWidth={2} />}
       </button>
       <AnimatePresence>
         {open && (
@@ -32,7 +34,7 @@ export function TooltipInfo({ content, children }: TooltipInfoProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 2, scale: 0.98 }}
             transition={{ duration: 0.12 }}
-            className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-md border border-v0-200/30 bg-v0-50 p-3 text-[12px] leading-relaxed text-v0-700 shadow-elevated dark:border-v0-700/30 dark:bg-v0-900 dark:text-v0-200"
+            className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-md border border-v0-150 bg-v0 p-3 text-[14px] font-normal leading-relaxed text-v0-800 shadow-float dark:border-v0-800 dark:bg-v0-900 dark:text-v0-200"
           >
             {content}
           </motion.span>

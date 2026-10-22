@@ -81,6 +81,11 @@ export interface MeanEstimationInputs {
   xBar: number;       // media muestral
   s: number;          // desviación estándar
   confidence: number; // nivel de confianza (0-1)
+  /**
+   * true si s es la desviación poblacional conocida (σ): se usa z.
+   * Por defecto (false/ausente) s es muestral y se usa t de Student con n−1 gl.
+   */
+  sigmaKnown?: boolean;
 }
 
 export interface ProportionEstimationInputs {
@@ -89,13 +94,38 @@ export interface ProportionEstimationInputs {
   confidence: number;
 }
 
+/** Distribución usada para el valor crítico del intervalo. */
+export type CriticalKind = 'z' | 't';
+
 export interface EstimationResults {
   standardError: number;
   marginOfError: number;
+  /**
+   * Valor crítico usado en el intervalo (compatibilidad hacia atrás).
+   * OJO: pese al nombre, contiene t_{α/2,n−1} cuando criticalKind === 't'.
+   * Es siempre igual a `critical`.
+   */
   zCritical: number;
+  /** Valor crítico usado (z_{α/2} o t_{α/2,gl}). */
+  critical: number;
+  /** Distribución del valor crítico: 'z' (normal) o 't' (Student). */
+  criticalKind: CriticalKind;
+  /** Grados de libertad (solo cuando criticalKind === 't'). */
+  df?: number;
   lowerBound: number;
   upperBound: number;
   confidenceLevel: number;
+}
+
+export interface ProportionEstimationResults extends EstimationResults {
+  center: number;
+  /** Límites del intervalo de Wilson (score), recomendado para n pequeño o p̂ extremo. */
+  wilsonLower: number;
+  wilsonUpper: number;
+  /** Centro del intervalo de Wilson. */
+  wilsonCenter: number;
+  /** true si los límites de Wald (lowerBound/upperBound) se recortaron a [0, 1]. */
+  waldClamped: boolean;
 }
 
 // -----------------------------------------------------
@@ -167,6 +197,14 @@ export interface TukeyResult {
   q: number;
   comparisons: TukeyComparison[];
   alpha: number;
+  /** Origen de q: tabla impresa o cálculo numérico del rango studentizado. */
+  qMethod?: 'table' | 'numeric';
+  /** true si (k, α) quedan fuera de la tabla (k > 10 o α ∉ {0.05, 0.01}). */
+  outOfTable?: boolean;
+  /** true si q es solo aproximado (no se pudo calcular con exactitud). */
+  approximate: boolean;
+  /** Aviso en español para mostrar junto al resultado, si procede. */
+  warning?: string;
 }
 
 export interface AnovaTwoWayResult {

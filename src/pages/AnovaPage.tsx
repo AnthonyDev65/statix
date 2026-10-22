@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TableProperties, CheckCircle2, XCircle, Sigma } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
+import { EmptyResult } from '@/components/Panel';
 import { Section } from '@/components/Section';
 import { StatCard } from '@/components/StatCard';
 import { FormulaCard } from '@/components/FormulaCard';
@@ -147,12 +148,10 @@ export function AnovaPage() {
         title="ANOVA"
         description="Compara las medias de varios grupos con el análisis de la varianza. Introduce los datos como en una hoja de cálculo y elige uno o dos factores."
         icon={TableProperties}
-        badge="inference"
-        status={{ label: 'Ready', tone: 'ready' }}
-        actions={hasResult && <ExportButton payload={pdfPayload} summary={summary} label="Export" />}
+        actions={hasResult && <ExportButton payload={pdfPayload} summary={summary} label="Exportar" />}
       />
 
-      <div className="inline-flex items-center gap-1 rounded-lg border border-v0-200/30 bg-v0-50 p-1 dark:border-v0-800/30 dark:bg-v0-900">
+      <div role="tablist" aria-label="Número de factores" className="inline-flex items-center gap-1 rounded-lg bg-v0-100 p-1 dark:bg-v0-900">
         <ModeTab active={mode === 'one-way'} onClick={() => setMode('one-way')} label="Un factor" sub="1" />
         <ModeTab active={mode === 'two-way'} onClick={() => setMode('two-way')} label="Dos factores" sub="2" />
       </div>
@@ -160,7 +159,7 @@ export function AnovaPage() {
       <AnimatePresence mode="wait">
         {mode === 'one-way' ? (
           <motion.div key="one" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="space-y-6">
-            <Section title="Datos" monospaceTitle description="Cada columna es un grupo. Añade columnas (grupos) y filas (observaciones).">
+            <Section title="Datos" alwaysShowHeader description="Cada columna es un grupo. Añade columnas (grupos) y filas (observaciones).">
               <DataGrid
                 grid={grid1}
                 rowHeaders={rows1}
@@ -170,7 +169,7 @@ export function AnovaPage() {
                 onRowHeadersChange={setRows1}
                 onColHeadersChange={setCols1}
               />
-              <div className="mt-4 border-t border-v0-150/30 pt-4 dark:border-v0-800/30">
+              <div className="mt-4">
                 <ActionBar
                   onExample={() => { setGrid1(ONE_WAY_EXAMPLE); setCols1(ONE_WAY_COLS); }}
                   onReset={() => { setGrid1([['', '', '']]); setCols1(['Grupo 1', 'Grupo 2', 'Grupo 3']); }}
@@ -181,12 +180,12 @@ export function AnovaPage() {
 
             {oneWay ? (
               <div className="space-y-6">
-                <Section title="Tabla ANOVA" monospaceTitle description="Resultado del análisis">
+                <Section title="Tabla ANOVA" alwaysShowHeader description="Cómo se reparte la variabilidad entre los grupos y dentro de ellos.">
                   <AnovaTable rows={oneWay.res.rows} />
                   <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <StatCard label="F" value={formatNumber(oneWay.res.fStatistic, 4)} icon={Sigma} description={`F crítico ${formatNumber(oneWay.res.fCritical, 3)}`} />
-                    <StatCard label="valor-p" value={formatNumber(oneWay.res.pValue, 4)} icon={Sigma} description={`α = ${formatProbability(ALPHA, 2)}`} />
-                    <StatCard label="k / N" value={`${oneWay.res.k} / ${oneWay.res.N}`} icon={Sigma} description="grupos / observaciones" />
+                    <StatCard label="Estadístico F" value={formatNumber(oneWay.res.fStatistic, 4)} icon={Sigma} description={`Se compara con F crítico = ${formatNumber(oneWay.res.fCritical, 3)}`} />
+                    <StatCard label="Valor p" value={formatNumber(oneWay.res.pValue, 4)} icon={Sigma} description={`Si es menor que α = ${formatProbability(ALPHA, 0)}, hay diferencias`} />
+                    <StatCard label="Grupos y datos" value={`${oneWay.res.k} / ${oneWay.res.N}`} icon={Sigma} description="k grupos / N observaciones" />
                   </div>
                 </Section>
 
@@ -202,7 +201,7 @@ export function AnovaPage() {
           </motion.div>
         ) : (
           <motion.div key="two" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="space-y-6">
-            <Section title="Datos" monospaceTitle description="Filas = factor A, columnas = factor B. Escribe varias réplicas por celda (coma) para la interacción.">
+            <Section title="Datos" alwaysShowHeader description="Filas = factor A, columnas = factor B. Escribe varias réplicas por celda (coma) para la interacción.">
               <DataGrid
                 grid={grid2}
                 rowHeaders={rows2}
@@ -213,7 +212,7 @@ export function AnovaPage() {
                 onRowHeadersChange={setRows2}
                 onColHeadersChange={setCols2}
               />
-              <div className="mt-4 border-t border-v0-150/30 pt-4 dark:border-v0-800/30">
+              <div className="mt-4">
                 <ActionBar
                   onExample={() => { setGrid2(TWO_WAY_EXAMPLE); setRows2(TWO_WAY_ROWS); setCols2(TWO_WAY_COLS); }}
                   onReset={() => { setGrid2([['', ''], ['', '']]); setRows2(['A1', 'A2']); setCols2(['B1', 'B2']); }}
@@ -224,8 +223,8 @@ export function AnovaPage() {
 
             {twoWay ? (
               <div className="space-y-6">
-                <Section title="Tabla ANOVA" monospaceTitle description={twoWay.hasReplication ? `Dos factores con repetición · r = ${twoWay.r}` : 'Dos factores sin repetición (bloques)'}>
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-v0-200/40 px-3 py-1.5 font-mono text-[11px] text-v0-600 dark:border-v0-800/40 dark:text-v0-300">
+                <Section title="Tabla ANOVA" alwaysShowHeader description={twoWay.hasReplication ? `Dos factores con repetición · r = ${twoWay.r}` : 'Dos factores sin repetición (bloques)'}>
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-md bg-v0-100 px-3 py-1.5 text-[14px] text-v0-700 dark:bg-v0-800 dark:text-v0-200">
                     Detectado: {twoWay.a}×{twoWay.b}{twoWay.hasReplication ? `, r = ${twoWay.r} (con interacción)` : ' (sin repetición)'}
                   </div>
                   <AnovaTable rows={twoWay.rows} />
@@ -239,7 +238,7 @@ export function AnovaPage() {
       </AnimatePresence>
 
       <AdvancedOnly>
-        <Section title="Framework" monospaceTitle divider description="Fórmulas utilizadas">
+        <Section title="Fórmulas" divider description="Fórmulas utilizadas">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {ANOVA_FORMULAS.map((f, i) => (
               <FormulaCard key={f.id} formula={f} index={i} />
@@ -259,15 +258,17 @@ function ModeTab({ active, onClick, label, sub }: { active: boolean; onClick: ()
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
-      className={`relative flex items-center gap-2.5 rounded-md px-4 py-2 text-left transition-all duration-200 ${
+      className={`flex min-h-[40px] items-center gap-2 rounded-md px-4 text-left transition-colors duration-150 ${
         active
-          ? 'bg-v0-950 text-v0-50 shadow-soft dark:bg-v0-50 dark:text-v0-950'
-          : 'text-v0-500/70 hover:bg-v0-75 hover:text-v0-900 dark:text-v0-300/80 dark:hover:bg-v0-900 dark:hover:text-v0-100'
+          ? 'bg-v0-950 text-v0-50 dark:bg-v0-50 dark:text-v0-950'
+          : 'text-v0-700 hover:bg-v0-150 hover:text-v0-950 dark:text-v0-200 dark:hover:bg-v0-800 dark:hover:text-v0-50'
       }`}
     >
-      <span className="font-mono text-[11px] font-medium opacity-70">{sub}</span>
-      <span className="text-[13.5px] font-medium">{label}</span>
+      <span className="text-[15px] font-semibold">{label}</span>
+      <span className="sr-only">{sub}</span>
     </button>
   );
 }
@@ -275,37 +276,66 @@ function ModeTab({ active, onClick, label, sub }: { active: boolean; onClick: ()
 function DecisionCard({ reject }: { reject: boolean }) {
   const Icon = reject ? CheckCircle2 : XCircle;
   return (
-    <div className={`flex items-center gap-3 rounded-xl border px-5 py-4 ${
-      reject
-        ? 'border-emerald-500/25 bg-emerald-500/[0.05]'
-        : 'border-v0-300/30 bg-v0-100/40 dark:border-v0-700/40 dark:bg-v0-800/30'
-    }`}>
-      <Icon size={20} strokeWidth={1.9} className={reject ? 'text-emerald-600 dark:text-emerald-400' : 'text-v0-500'} />
-      <p className="text-[13.5px] font-medium text-v0-900 dark:text-v0-50">
-        {reject
-          ? 'Se rechaza H₀: hay evidencia de que al menos una media difiere.'
-          : 'No se rechaza H₀: no hay evidencia suficiente de diferencias entre las medias.'}
-      </p>
+    <div
+      role="status"
+      className={`flex items-start gap-3 rounded-lg px-5 py-4 ${
+        reject
+          ? 'bg-v0-950 text-v0-50 dark:bg-v0-50 dark:text-v0-950'
+          : 'bg-v0-100 text-v0-900 dark:bg-v0-800 dark:text-v0-50'
+      }`}
+    >
+      <Icon size={22} strokeWidth={1.9} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
+      <div>
+        <p className="text-[17px] font-semibold">
+          {reject ? 'Las medias no son todas iguales' : 'No hay pruebas de que las medias difieran'}
+        </p>
+        <p className="mt-1 text-[15px] leading-relaxed opacity-90">
+          {reject
+            ? 'Se rechaza H₀: al menos un grupo tiene una media distinta. Mira las comparaciones por pares para saber cuál.'
+            : 'No se rechaza H₀: las diferencias observadas pueden deberse al azar del muestreo.'}
+        </p>
+      </div>
     </div>
   );
 }
 
 function TukeyCard({ tukey }: { tukey: TukeyResult }) {
   return (
-    <Section title="Post-hoc · Tukey HSD" monospaceTitle description={`Comparaciones por pares (q = ${formatNumber(tukey.q, 3)})`}>
-      <div className="overflow-hidden rounded-xl border border-v0-200/30 dark:border-v0-800/30">
-        {tukey.comparisons.map((c, i) => (
-          <div key={`${c.a}-${c.b}`} className={`flex items-center justify-between px-4 py-3 ${i > 0 ? 'border-t border-v0-150/30 dark:border-v0-800/30' : ''}`}>
-            <span className="text-[13px] font-medium text-v0-800 dark:text-v0-100">{c.a} vs {c.b}</span>
-            <span className="flex items-center gap-3 font-mono text-[12px] text-v0-600 dark:text-v0-300">
-              <span>|Δ| = {formatNumber(c.meanDiff, 3)}</span>
-              <span>HSD = {formatNumber(c.hsd, 3)}</span>
-              <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${c.significant ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' : 'bg-v0-100 text-v0-500 dark:bg-v0-800 dark:text-v0-400'}`}>
-                {c.significant ? 'significativo' : 'no signif.'}
-              </span>
-            </span>
-          </div>
-        ))}
+    <Section
+      title="Comparaciones por pares (Tukey HSD)"
+      alwaysShowHeader
+      description={`Dos grupos difieren si |Δ| supera el HSD. Valor q usado: ${formatNumber(tukey.q, 3)}.`}
+    >
+      {tukey.warning && (
+        <p role="note" className="rounded-md bg-v0-100 px-4 py-3 text-[14px] text-v0-800 dark:bg-v0-800 dark:text-v0-100">
+          {tukey.warning}
+        </p>
+      )}
+      <div className="overflow-x-auto rounded-lg bg-v0-50 dark:bg-v0-900">
+        <table className="w-full min-w-[480px] text-left text-[15px]">
+          <thead>
+            <tr className="border-b border-v0-150 text-[14px] text-v0-600 dark:border-v0-800 dark:text-v0-300">
+              <th scope="col" className="px-4 py-3 font-medium">Pareja</th>
+              <th scope="col" className="px-4 py-3 text-right font-medium">|Δ| medias</th>
+              <th scope="col" className="px-4 py-3 text-right font-medium">HSD</th>
+              <th scope="col" className="px-4 py-3 font-medium">Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tukey.comparisons.map((c) => (
+              <tr key={`${c.a}-${c.b}`} className="border-b border-v0-100 last:border-0 dark:border-v0-800">
+                <td className="px-4 py-3 font-medium text-v0-900 dark:text-v0-50">{c.a} vs {c.b}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-v0-800 dark:text-v0-100">{formatNumber(c.meanDiff, 3)}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-v0-800 dark:text-v0-100">{formatNumber(c.hsd, 3)}</td>
+                <td className="px-4 py-3">
+                  <span className={`text-[14px] font-semibold ${c.significant ? 'text-v0-950 dark:text-v0-50' : 'text-v0-500 dark:text-v0-300'}`}>
+                    {c.significant ? 'Diferencia significativa' : 'Sin diferencia clara'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </Section>
   );
@@ -313,10 +343,9 @@ function TukeyCard({ tukey }: { tukey: TukeyResult }) {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-v0-300/20 bg-v0-50 px-6 py-16 text-center dark:border-v0-700/30 dark:bg-v0-900">
-      <TableProperties size={22} strokeWidth={1.5} className="text-v0-400/70" />
-      <p className="mt-4 text-[14px] font-medium text-v0-900 dark:text-v0-100">Introduce datos válidos</p>
-      <p className="mt-1 text-[12.5px] text-v0-500/70">Un factor: ≥ 2 grupos con ≥ 2 datos. Dos factores: rejilla completa ≥ 2×2.</p>
-    </div>
+    <EmptyResult
+      title="Faltan datos para el análisis"
+      text="Un factor: al menos 2 grupos con 2 datos cada uno. Dos factores: una rejilla completa de al menos 2×2."
+    />
   );
 }

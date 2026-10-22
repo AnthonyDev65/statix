@@ -1,284 +1,413 @@
 // =====================================================
-// Statix — HomePage (Vercel-style hero)
+// Statix — HomePage
+// Un "informe impreso" de la estadística: mosaico de gráficos históricos,
+// el tablero de Galton en vivo y una entrada por pregunta.
 // =====================================================
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  Activity, ArrowRight, CheckCircle2, ChevronRight, Copy, Layers,
-  Sigma, Sparkles, Target, Terminal, type LucideIcon,
-} from 'lucide-react';
-import { NAV_ITEMS, APP_NAME, APP_TAGLINE } from '@/constants';
+import { ArrowRight } from 'lucide-react';
+import { APP_NAME, NAV_GROUPS, NAV_ITEMS } from '@/constants';
+import { GaltonLive } from '@/components/home/GaltonLive';
 
-const ICONS: Record<string, LucideIcon> = { Sigma, Layers, Activity, Target };
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+const reveal = {
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '0px 0px -80px 0px' },
+};
+
+/** Temas en preparación: se listan para que se vea hacia dónde crece Statix. */
+const UPCOMING = [
+  { question: '¿Cuántas llegadas por hora puedo esperar?', topic: 'Distribución de Poisson' },
+  { question: '¿Mi muestra contradice lo que se afirma?', topic: 'Pruebas de hipótesis' },
+  { question: '¿Cómo resumo y dibujo mis datos?', topic: 'Estadística descriptiva' },
+  { question: '¿Dos variables están relacionadas?', topic: 'Correlación y regresión' },
+];
 
 export function HomePage() {
   return (
-    <div className="space-y-16">
-      {/* HERO */}
-      <section className="relative overflow-hidden rounded-xl border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900">
-        {/* Grid de puntos — fondo característico de Vercel */}
-        <div className="absolute inset-0 -z-10 bg-dots-light bg-dots opacity-60 [mask-image:radial-gradient(ellipse_at_center,black_25%,transparent_70%)] dark:bg-dots-dark" />
-        {/* Brillo superior */}
-        <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-v0-50/60 to-transparent dark:from-v0-900/30" />
+    <div className="-mx-4 -mt-8 sm:-mx-6 sm:-mt-10 lg:-mx-10">
+      <Masthead />
 
-        <div className="px-7 pt-14 pb-12 sm:px-12 sm:pt-20 sm:pb-16">
-          {/* Top badges */}
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="mb-9 flex flex-wrap items-center gap-2"
-          >
-            <span className="inline-flex items-center gap-2 rounded-md border border-v0-200/30 bg-v0-50 px-2.5 py-1.5 font-mono text-[11.5px] font-medium text-v0-800 dark:border-v0-800/30 dark:bg-v0-900 dark:text-v0-200">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-500/60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              </span>
-              v1.0 — Shipped
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-v0-200/30 bg-v0-50 px-2.5 py-1.5 font-mono text-[11.5px] text-v0-500/70 dark:border-v0-800/30 dark:bg-v0-900 dark:text-v0-300/80">
-              <Terminal size={11} strokeWidth={1.75} />
-              npm i statix
-            </span>
-            <span className="hidden items-center gap-1.5 rounded-md border border-v0-200/30 bg-v0-50 px-2.5 py-1.5 font-mono text-[11.5px] text-v0-500/70 dark:border-v0-800/30 dark:bg-v0-900 dark:text-v0-300/80 sm:inline-flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-v0-300 dark:bg-v0-600" />
-              4 modules
-            </span>
-          </motion.div>
-
-          {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-            className="text-balance text-[52px] font-semibold leading-[0.92] tracking-tightest text-v0-950 dark:text-v0-50 sm:text-[80px] lg:text-[104px]"
-          >
-            Probabilidad,
-            <br />
-            <span className="text-v0-400/70 dark:text-v0-600">en producción.</span>
-          </motion.h1>
-
+      {/* Título y entrada */}
+      <section className="px-4 pb-24 pt-12 sm:px-6 lg:px-10 lg:pb-32 lg:pt-16">
+        <div className="grid gap-8 lg:grid-cols-[42%_1fr]">
           <motion.p
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="mt-7 max-w-xl text-balance text-[16px] leading-relaxed text-v0-500/70 dark:text-v0-300/80 sm:text-[17.5px]"
+            transition={{ duration: 0.6, delay: 0.35, ease: EASE }}
+            className="order-2 max-w-[34ch] text-pretty text-[19px] leading-relaxed text-v0-700 dark:text-v0-200 lg:order-1 lg:pt-3 lg:text-[20px]"
           >
-            Calculadora profesional de Estadística y Probabilidad.
-            Distribuciones binomial, hipergeométrica, normal y estimación
-            de parámetros — con la precisión de una herramienta académica
-            y la estética de software de producción.
+            Probabilidades, intervalos de confianza y ANOVA, con la fórmula, el gráfico y la
+            explicación de cada número en la misma página.
           </motion.p>
-
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25 }}
-            className="mt-9 flex flex-wrap items-center gap-3"
-          >
-            <Link
-              to="/binomial"
-              className="group relative inline-flex h-11 items-center gap-2 overflow-hidden rounded-md bg-v0-950 px-5 text-[14px] font-medium text-v0-50 transition-all duration-200 hover:bg-v0-800 hover:shadow-soft active:scale-[0.98] active:bg-v0-900 dark:bg-v0-50 dark:text-v0-950 dark:hover:bg-v0-50 dark:active:bg-v0-100"
+          <div className="order-1 lg:order-2">
+            <h1 className="text-[clamp(48px,6.2vw,96px)] font-semibold leading-[0.92] tracking-tightest text-v0-950 dark:text-v0-50">
+              <MaskedLine delay={0}>Del azar</MaskedLine>
+              <MaskedLine delay={0.11}>a la campana</MaskedLine>
+            </h1>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35, ease: EASE }}
+              className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3"
             >
-              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full dark:via-black/10" />
-              Empezar ahora
-              <ArrowRight size={14} strokeWidth={1.75} className="relative transition-transform group-hover:translate-x-0.5" />
-            </Link>
-            <Link
-              to="/normal"
-              className="inline-flex h-11 items-center gap-2 rounded-md border border-v0-200/30 bg-v0-50 px-5 text-[14px] font-medium text-v0-800 transition-all duration-200 hover:border-v0-300/60 hover:bg-v0-50 active:scale-[0.98] dark:border-v0-700/30 dark:bg-v0-900 dark:text-v0-100 dark:hover:border-v0-600 dark:hover:bg-v0-900"
-            >
-              Ver curva normal
-            </Link>
-            <a
-              href="#modules"
-              className="inline-flex h-11 items-center gap-1 px-2 text-[14px] font-medium text-v0-500/70 transition-all duration-200 hover:text-v0-900 active:scale-[0.98] dark:text-v0-300/80 dark:hover:text-v0-100"
-            >
-              Explorar módulos
-              <ChevronRight size={14} strokeWidth={1.75} />
-            </a>
-          </motion.div>
-
-          {/* Terminal/CLI demo */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-12 overflow-hidden rounded-lg border border-v0-950 bg-v0-950 text-v0-50 shadow-elevated dark:border-v0-50 dark:bg-v0-50 dark:text-v0-950"
-          >
-            <div className="flex items-center justify-between border-b border-v0-800 px-4 py-3 dark:border-v0-200/30">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-v0-700 dark:bg-v0-300" />
-                <span className="h-2.5 w-2.5 rounded-full bg-v0-700 dark:bg-v0-300" />
-                <span className="h-2.5 w-2.5 rounded-full bg-v0-700 dark:bg-v0-300" />
-              </div>
-              <span className="font-mono text-[11px] text-v0-400/70 dark:text-v0-500/70">
-                statix · build.log
-              </span>
-              <div className="w-12" />
-            </div>
-            <div className="space-y-2 px-5 py-5 font-mono text-[13px] leading-relaxed sm:px-6">
-              <p>
-                <span className="text-emerald-500">$</span>
-                <span className="ml-2 text-v0-300 dark:text-v0-600">statix</span>
-                <span className="text-v0-50 dark:text-v0-950"> calculate binomial</span>
-                <span className="text-v0-400/70 dark:text-v0-500/70"> --n=20 --p=0.3 --x=6</span>
-              </p>
-              <p className="text-v0-400/70 dark:text-v0-500/70">→ Building calculation…</p>
-              <p className="text-v0-400/70 dark:text-v0-500/70">→ Validating parameters…</p>
-              <p className="text-v0-400/70 dark:text-v0-500/70">→ Computing probability mass function…</p>
-              <p className="mt-2 flex items-center gap-2">
-                <span className="text-emerald-500">✓</span>
-                <span className="text-v0-300 dark:text-v0-600">P(X = 6)</span>
-                <span className="text-v0-50 dark:text-v0-950">=</span>
-                <span className="font-semibold text-v0-50 dark:text-v0-950 tabular-nums">0.1916</span>
-                <span className="text-v0-400/70 dark:text-v0-500/70">(19.16%)</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="text-emerald-500">✓</span>
-                <span className="text-v0-300 dark:text-v0-600">E[X]</span>
-                <span className="text-v0-50 dark:text-v0-950">=</span>
-                <span className="font-semibold text-v0-50 dark:text-v0-950 tabular-nums">6.0000</span>
-                <span className="text-v0-400/70 dark:text-v0-500/70">μ</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="text-emerald-500">✓</span>
-                <span className="text-v0-300 dark:text-v0-600">σ</span>
-                <span className="text-v0-50 dark:text-v0-950">=</span>
-                <span className="font-semibold text-v0-50 dark:text-v0-950 tabular-nums">2.0494</span>
-                <span className="ml-1 inline-block h-3.5 w-1.5 animate-blink bg-v0-50 dark:bg-v0-900" />
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* MÓDULOS */}
-      <section id="modules">
-        <header className="mb-7 flex items-end justify-between gap-4">
-          <div>
-            <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-v0-500/70 dark:text-v0-300/80">
-              /modules
-            </p>
-            <h2 className="mt-2.5 text-[32px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50 sm:text-[40px]">
-              Cuatro módulos,
-              <br className="sm:hidden" /> una plataforma.
-            </h2>
+              <Link
+                to="/binomial"
+                className="inline-flex h-12 items-center gap-2 rounded-md bg-v0-950 px-6 text-[16px] font-semibold text-v0-50 transition-[background-color,transform] duration-150 hover:bg-v0-800 active:scale-[0.98] dark:bg-v0-50 dark:text-v0-950 dark:hover:bg-v0-200"
+              >
+                Empezar por la binomial
+                <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+              <a
+                href="#preguntas"
+                className="text-[16px] font-semibold text-v0-950 underline-offset-4 hover:underline dark:text-v0-50"
+              >
+                Ver todos los temas
+              </a>
+            </motion.div>
           </div>
-          <p className="hidden max-w-sm text-[13.5px] text-v0-500/70 dark:text-v0-300/80 lg:block">
-            Cada uno corre en el navegador, persiste localmente y exporta a
-            PDF con un solo clic.
-          </p>
-        </header>
-
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {NAV_ITEMS.map((item, i) => {
-            const Icon = ICONS[item.icon] ?? Sigma;
-            return (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 + i * 0.05, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <Link
-                  to={item.path}
-                  className="group relative flex h-full flex-col justify-between overflow-hidden rounded-lg border border-v0-200/30 bg-v0-50 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-v0-950 hover:shadow-soft dark:border-v0-800/30 dark:bg-v0-900 dark:hover:border-v0-50"
-                >
-                  <div>
-                    <div className="mb-5 flex items-center justify-between">
-                      <span className="font-mono text-[11px] font-medium tabular-nums text-v0-400/70 dark:text-v0-500/70">
-                        0{i + 1}
-                      </span>
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-v0-200/30 bg-v0-50 transition-all duration-200 group-hover:border-v0-950 group-hover:bg-v0-950 group-hover:text-v0-50 dark:border-v0-800/30 dark:bg-v0-900 dark:group-hover:border-v0-50 dark:group-hover:bg-v0-50 dark:group-hover:text-v0-950">
-                        <Icon
-                          size={14}
-                          strokeWidth={1.75}
-                          className="text-v0-700 transition-colors group-hover:text-v0-50 dark:text-v0-300 dark:group-hover:text-v0-950"
-                        />
-                      </span>
-                    </div>
-                    <h3 className="text-[16px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50">
-                      {item.label}
-                    </h3>
-                    <p className="mt-2 text-[13px] leading-relaxed text-v0-500/70 dark:text-v0-300/80">
-                      {item.description}
-                    </p>
-                  </div>
-                  <div className="mt-6 inline-flex items-center gap-1.5 font-mono text-[11.5px] font-medium text-v0-500/70 transition-all duration-200 group-hover:gap-2.5 group-hover:text-v0-950 dark:text-v0-300/80 dark:group-hover:text-v0-50">
-                    open <ArrowRight size={11} strokeWidth={1.75} />
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section>
-        <header className="mb-7">
-          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-v0-500/70 dark:text-v0-300/80">
-            /features
-          </p>
-          <h2 className="mt-2.5 text-[32px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50 sm:text-[40px]">
-            Construido para uso académico serio.
+      {/* Tablero de Galton */}
+      <section className="border-y border-v0-150 bg-v0 px-4 py-24 dark:border-v0-800 dark:bg-v0-900 sm:px-6 lg:px-10 lg:py-32">
+        <motion.div {...reveal} transition={{ duration: 0.6, ease: EASE }} className="mb-12 grid gap-6 lg:grid-cols-[42%_1fr]">
+          <h2 className="max-w-[14ch] text-[clamp(34px,3.6vw,52px)] font-semibold leading-[1] tracking-tighter text-v0-950 dark:text-v0-50">
+            Mueve n y mira nacer la campana
           </h2>
-        </header>
+          <p className="max-w-[52ch] text-[17px] leading-relaxed text-v0-700 dark:text-v0-200">
+            En 1889 Francis Galton dejó caer bolas entre clavos: cada clavo es un ensayo con
+            dos salidas, y el montón final dibuja una campana. Aquí puedes repetir el experimento
+            sin bolas.
+          </p>
+        </motion.div>
+        <motion.div {...reveal} transition={{ duration: 0.6, delay: 0.08, ease: EASE }}>
+          <GaltonLive />
+        </motion.div>
+      </section>
 
-        <div className="overflow-hidden rounded-xl border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900">
-          <div className="grid divide-y divide-v0-150/30 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
-            {[
-              { icon: CheckCircle2, title: 'Resultados precisos', text: 'Función Gamma, normal estándar y cuantiles numéricos.' },
-              { icon: Terminal, title: 'CLI mental', text: 'Cada acción se siente como ejecutar un comando: rápida, sin fricción.' },
-              { icon: Sparkles, title: 'Fórmulas en LaTeX', text: 'Renderizado con KaTeX. Copia el resultado y pégalo en tu trabajo.' },
-              { icon: Copy, title: 'Exporta a PDF', text: 'jsPDF con cabecera institucional, meta y secciones estructuradas.' },
-            ].map((f, i) => (
+      {/* Entrada por pregunta */}
+      <section id="preguntas" className="scroll-mt-20 px-4 py-24 sm:px-6 lg:px-10 lg:py-32">
+        <motion.h2
+          {...reveal}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="max-w-[20ch] text-[clamp(36px,4.2vw,64px)] font-semibold leading-[0.98] tracking-tighter text-v0-950 dark:text-v0-50 lg:pl-[3vw]"
+        >
+          Empieza por la pregunta que tienes
+        </motion.h2>
+
+        <div className="mt-16 grid gap-10 lg:grid-cols-[42%_1fr]">
+          <motion.figure
+            {...reveal}
+            transition={{ duration: 0.7, ease: EASE }}
+            className="order-2 self-end lg:order-1 lg:pr-12"
+          >
+            <img
+              src="/images/gauss.webp"
+              width={900}
+              height={1147}
+              alt="Retrato al óleo de Carl Friedrich Gauss en 1840, con gorro negro y abrigo oscuro"
+              loading="lazy"
+              decoding="async"
+              className="aspect-[4/5] w-full max-w-[340px] rounded-md object-cover grayscale contrast-[1.05]"
+            />
+            <figcaption className="mt-3 text-[14px] text-v0-600 dark:text-v0-300">
+              Carl Friedrich Gauss, 1840. La curva normal lleva su nombre.
+            </figcaption>
+          </motion.figure>
+
+          <div className="order-1 lg:order-2">
+            {NAV_GROUPS.map((group, gi) => (
               <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 + i * 0.04 }}
-                className="p-6 transition-colors hover:bg-v0-50/60 dark:hover:bg-v0-900/40"
+                key={group.id}
+                {...reveal}
+                transition={{ duration: 0.5, delay: gi * 0.08, ease: EASE }}
+                className={gi > 0 ? 'mt-11' : ''}
               >
-                <span className="mb-4 flex h-8 w-8 items-center justify-center rounded-md border border-v0-200/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900">
-                  <f.icon size={14} strokeWidth={1.75} className="text-v0-800 dark:text-v0-200" />
-                </span>
-                <h3 className="text-[14px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50">
-                  {f.title}
+                <h3 className="mb-2 text-[15px] font-semibold text-v0-950 dark:text-v0-50">
+                  {group.label}
                 </h3>
-                <p className="mt-2 text-[12.5px] leading-relaxed text-v0-500/70 dark:text-v0-300/80">
-                  {f.text}
-                </p>
+                <ul>
+                  {NAV_ITEMS.filter((i) => i.group === group.id).map((item) => (
+                    <li key={item.id}>
+                      <Link
+                        to={item.path}
+                        className="group -mx-3 grid grid-cols-[1fr_auto] items-baseline gap-x-6 gap-y-1 rounded-md px-3 py-3 transition-colors hover:bg-v0-100 dark:hover:bg-v0-900 sm:grid-cols-[1fr_minmax(0,220px)_auto]"
+                      >
+                        <span className="text-[17px] font-medium text-v0-950 dark:text-v0-50">
+                          {item.question}
+                        </span>
+                        <span className="col-start-1 text-[15px] text-v0-600 dark:text-v0-300 sm:col-start-2">
+                          {item.short}{' '}
+                          <span className="text-v0-600 dark:text-v0-300">{item.notation}</span>
+                        </span>
+                        <ArrowRight
+                          size={17}
+                          aria-hidden="true"
+                          className="col-start-2 row-start-1 text-v0-950 transition-transform group-hover:translate-x-1 dark:text-v0-50 sm:col-start-3"
+                        />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </motion.div>
             ))}
+
+            <motion.div {...reveal} transition={{ duration: 0.5, delay: 0.16, ease: EASE }} className="mt-11">
+              <h3 className="mb-2 text-[15px] font-semibold text-v0-600 dark:text-v0-300">
+                En preparación
+              </h3>
+              <ul>
+                {UPCOMING.map((u) => (
+                  <li
+                    key={u.topic}
+                    className="grid grid-cols-1 gap-x-6 gap-y-1 py-3 sm:grid-cols-[1fr_minmax(0,220px)_17px]"
+                  >
+                    <span className="text-[17px] text-v0-600 dark:text-v0-300">{u.question}</span>
+                    <span className="text-[15px] text-v0-500 dark:text-v0-300">{u.topic}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* STACK */}
-      <section>
-        <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-v0-500/70 dark:text-v0-300/80">
-          /stack
-        </p>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {['React 18', 'TypeScript', 'Vite', 'Tailwind', 'Framer Motion',
-            'Recharts', 'KaTeX', 'MathJS', 'Zod', 'jsPDF'].map((tech) => (
-            <span
-              key={tech}
-              className="rounded-md border border-v0-200/30 bg-v0-50 px-2.5 py-1 font-mono text-[11.5px] text-v0-600 transition-colors hover:border-v0-300/60 hover:bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900 dark:text-v0-300 dark:hover:border-v0-700 dark:hover:bg-v0-900"
-            >
-              {tech}
-            </span>
-          ))}
+      {/* Cómo funciona: lo que escribes y lo que recibes */}
+      <section className="border-y border-v0-150 bg-v0 px-4 py-24 dark:border-v0-800 dark:bg-v0-900 sm:px-6 lg:px-10 lg:py-32">
+        <div className="lg:pl-[42%]">
+          <motion.h2
+            {...reveal}
+            transition={{ duration: 0.6, ease: EASE }}
+            className="text-[28px] font-semibold tracking-tighter text-v0-950 dark:text-v0-50"
+          >
+            Un cálculo, tres respuestas
+          </motion.h2>
+
+          <div className="mt-12 max-w-[560px] space-y-20">
+            <Exchange
+              say="Primero, escribe los datos de tu problema."
+              call={
+                <div className="flex flex-wrap gap-2" data-ui>
+                  {[['Ensayos (n)', '20'], ['Probabilidad (p)', '0,30'], ['Éxitos (x)', '6']].map(([l, v]) => (
+                    <div key={l} className="min-w-[132px] flex-1 rounded-md bg-v0-50 px-3 py-2.5 dark:bg-v0-950">
+                      <span className="block text-[13px] text-v0-600 dark:text-v0-300">{l}</span>
+                      <span className="text-[18px] font-semibold tabular-nums text-v0-950 dark:text-v0-50">{v}</span>
+                    </div>
+                  ))}
+                </div>
+              }
+              response={
+                <p className="text-[16px] text-v0-800 dark:text-v0-100">
+                  <span className="text-v0-600 dark:text-v0-300">P(X = 6) =</span>{' '}
+                  <strong className="text-[28px] font-semibold tabular-nums text-v0-950 dark:text-v0-50">0,1916</strong>
+                </p>
+              }
+            />
+            <Exchange
+              say="Después, lee qué significa en palabras."
+              call={
+                <p className="text-[16px] text-v0-700 dark:text-v0-200">
+                  ¿Y eso es mucho o poco?
+                </p>
+              }
+              response={
+                <p className="text-[16px] leading-relaxed text-v0-800 dark:text-v0-100">
+                  Si repites el experimento 100 veces, en unas 19 obtendrás exactamente 6 éxitos.
+                  Lo más habitual es sacar 6, porque la media es n·p = 6.
+                </p>
+              }
+            />
+            <Exchange
+              wide
+              say="Por último, comprueba de dónde sale."
+              call={
+                <p className="text-[16px] text-v0-700 dark:text-v0-200">
+                  Activa el modo Aprender para ver la fórmula y la teoría.
+                </p>
+              }
+              response={
+                <div className="space-y-2 text-[18px] text-v0-900 dark:text-v0-50">
+                  <p className="tabular-nums">P(X = x) = C(n, x) · pˣ · (1 − p)ⁿ⁻ˣ</p>
+                  <p className="tabular-nums text-v0-700 dark:text-v0-200">
+                    = C(20, 6) · 0,3⁶ · 0,7¹⁴ = 38 760 · 0,000729 · 0,006782 = 0,1916
+                  </p>
+                </div>
+              }
+            />
+          </div>
         </div>
       </section>
 
-      <p className="text-center font-mono text-[10.5px] text-v0-400/70 dark:text-v0-500/70">
-        <Terminal size={10} strokeWidth={1.75} className="mr-1 inline" />
-        {APP_NAME} · {APP_TAGLINE}
-      </p>
+      <Footer />
     </div>
+  );
+}
+
+function MaskedLine({ children, delay }: { children: string; delay: number }) {
+  return (
+    <span className="block overflow-hidden pb-[0.06em]">
+      <motion.span
+        className="block"
+        initial={{ y: '105%' }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.9, delay, ease: EASE }}
+      >
+        {children}
+      </motion.span>
+    </span>
+  );
+}
+
+function BrandCurve({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="4 6 24 20" fill="none" className={className} aria-hidden="true">
+      <path d="M6 23C12 23 14.6 19.8 16 16C17.4 12.2 20 9 26 9" stroke="#FAFAFA" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="26" cy="9" r="1.6" fill="#0070F3" />
+    </svg>
+  );
+}
+
+/** Mosaico sin separaciones de gráficos históricos y bloques de color. */
+function Masthead() {
+  const img = 'h-full w-full object-cover grayscale contrast-[1.05]';
+  return (
+    <div className="grid h-[38vh] min-h-[260px] grid-cols-3 grid-rows-2 border-b border-v0-150 dark:border-v0-800 lg:h-[46vh] lg:max-h-[520px] lg:grid-cols-5">
+      <div className="row-span-2 overflow-hidden bg-v0-900">
+        <img
+          src="/images/galton-box.webp"
+          width={1000}
+          height={1500}
+          alt="Tablero de Galton de madera: bolas que caen entre clavos y se apilan formando una campana"
+          className={`${img} animate-[drift_24s_ease-in-out_infinite_alternate] motion-reduce:animate-none`}
+        />
+      </div>
+      <div className="col-span-2 overflow-hidden lg:col-span-2">
+        <img
+          src="/images/nightingale-mortality.webp"
+          width={1600}
+          height={876}
+          alt="Diagrama de áreas polares de Florence Nightingale sobre las causas de muerte en el ejército, 1858"
+          className={img}
+        />
+      </div>
+      <div className="hidden bg-accent-500 p-5 lg:flex lg:items-end">
+        <p className="text-[clamp(28px,3vw,44px)] font-semibold leading-none tracking-tighter text-white">1858</p>
+      </div>
+      {/* La marca de Statix a gran escala: la acumulada que termina en el punto azul. */}
+      <div className="row-span-2 hidden items-center justify-center bg-v0-950 dark:bg-v0-900 lg:flex">
+        <BrandCurve className="w-3/4" />
+      </div>
+      <div className="flex items-center justify-center bg-v0-950 dark:bg-v0-900 lg:hidden">
+        <BrandCurve className="w-2/3" />
+      </div>
+      <div className="overflow-hidden lg:col-span-2">
+        <img
+          src="/images/minard.webp"
+          width={1600}
+          height={763}
+          alt="Mapa de Charles Minard de 1869 sobre la campaña de Napoleón en Rusia: el ancho de la franja muestra los soldados"
+          className={img}
+        />
+      </div>
+      <div className="hidden overflow-hidden lg:block">
+        <img
+          src="/images/playfair-piecharts.webp"
+          width={1600}
+          height={877}
+          alt="Gráficos circulares de William Playfair de 1801 comparando la población y la extensión de las naciones de Europa"
+          className={img}
+        />
+      </div>
+    </div>
+  );
+}
+
+function Exchange({
+  say, call, response, wide = false,
+}: {
+  say: string;
+  call: React.ReactNode;
+  response: React.ReactNode;
+  wide?: boolean;
+}) {
+  return (
+    <motion.div {...reveal} transition={{ duration: 0.6, ease: EASE }}>
+      <p className="text-[20px] font-medium text-v0-950 dark:text-v0-50">{say}</p>
+      <div className="mt-4 rounded-md bg-v0-100 p-5 dark:bg-v0-800">{call}</div>
+      <div
+        className={`mt-4 rounded-md border border-v0-150 bg-v0 p-5 dark:border-v0-800 dark:bg-v0-900 sm:ml-14 ${
+          wide ? 'lg:max-w-[720px]' : ''
+        }`}
+      >
+        {response}
+      </div>
+    </motion.div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="flex min-h-[80dvh] flex-col justify-between bg-v0-950 px-4 pb-6 pt-12 text-v0-50 dark:bg-v0-900 sm:px-6 lg:px-10">
+      <div className="grid grid-cols-2 gap-8 text-[16px] lg:grid-cols-4">
+        <div>
+          <p className="font-semibold">Probabilidad</p>
+          <ul className="mt-2 space-y-1.5 text-v0-300">
+            {NAV_ITEMS.filter((i) => i.group === 'probabilidad').map((i) => (
+              <li key={i.id}><Link className="hover:text-v0-50 hover:underline" to={i.path}>{i.short}</Link></li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="font-semibold">Inferencia</p>
+          <ul className="mt-2 space-y-1.5 text-v0-300">
+            {NAV_ITEMS.filter((i) => i.group === 'inferencia').map((i) => (
+              <li key={i.id}><Link className="hover:text-v0-50 hover:underline" to={i.path}>{i.short}</Link></li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="font-semibold">Aprender</p>
+          <ul className="mt-2 space-y-1.5 text-v0-300">
+            <li><Link className="hover:text-v0-50 hover:underline" to="/docs">Teoría y fórmulas</Link></li>
+            <li><Link className="hover:text-v0-50 hover:underline" to="/changelog">Novedades</Link></li>
+          </ul>
+        </div>
+        <div>
+          <p className="font-semibold">Proyecto</p>
+          <ul className="mt-2 space-y-1.5 text-v0-300">
+            <li><a className="hover:text-v0-50 hover:underline" href="https://github.com/AnthonyDev65" target="_blank" rel="noopener noreferrer">Código en GitHub</a></li>
+            <li>Funciona en tu navegador, sin cuenta</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <svg viewBox="0 0 300 70" className="mt-16 w-full" role="img" aria-label={APP_NAME}>
+          <text
+            x="-4"
+            y="64"
+            textLength="306"
+            lengthAdjust="spacingAndGlyphs"
+            className="fill-current text-[86px] font-semibold tracking-tighter"
+          >
+            {APP_NAME}
+          </text>
+        </svg>
+        <p className="mt-4 max-w-[110ch] text-[13px] leading-relaxed text-v0-300">
+          Imágenes: tablero de Galton,{' '}
+          <a className="underline" href="https://commons.wikimedia.org/wiki/File:Galton_box.jpg">“Galton box”</a>,
+          exhibición de Estes Objethos Atelier, foto de Rodrigo.Argenton,{' '}
+          <a className="underline" href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>;
+          {' '}<a className="underline" href="https://commons.wikimedia.org/wiki/File:Nightingale-mortality.jpg">Florence Nightingale, 1858</a>;
+          {' '}<a className="underline" href="https://commons.wikimedia.org/wiki/File:Minard.png">Charles Minard, 1869</a>;
+          {' '}<a className="underline" href="https://commons.wikimedia.org/wiki/File:Playfair_piecharts.jpg">William Playfair, 1801</a>;
+          {' '}<a className="underline" href="https://commons.wikimedia.org/wiki/File:Carl_Friedrich_Gauss_1840_by_Jensen.jpg">Christian Albrecht Jensen, retrato de Gauss, 1840</a>.
+          Dominio público salvo indicación. Todas vía Wikimedia Commons, convertidas a escala de grises.
+        </p>
+      </div>
+    </footer>
   );
 }

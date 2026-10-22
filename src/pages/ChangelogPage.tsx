@@ -16,14 +16,13 @@ export function ChangelogPage() {
   return (
     <div className="space-y-12">
       <PageHeader
-        title="Changelog"
-        description="Historial de versiones de Statix. Aquí se registra todo lo que se añade, se arregla o se cambia en cada lanzamiento."
+        title="Novedades"
+        description="Qué se añade, se arregla o se cambia en cada versión de Statix."
         icon={GitCommitVertical}
         badge={`v${CHANGELOG[0]?.version ?? '1.0.0'}`}
-        status={{ label: 'Actualizado', tone: 'shipped' }}
       />
 
-      <div className="relative space-y-8 before:absolute before:left-[7px] before:top-2 before:h-full before:w-px before:bg-v0-150/40 dark:before:bg-v0-800/40">
+      <div className="relative space-y-8 before:absolute before:left-[7px] before:top-2 before:h-full before:w-px before:bg-v0-150 dark:before:bg-v0-800">
         {CHANGELOG.map((entry, i) => (
           <motion.section
             key={entry.version}
@@ -46,15 +45,15 @@ export function ChangelogPage() {
                 v{entry.version}
               </h2>
               {entry.current && (
-                <span className="rounded-md border border-emerald-500/25 bg-emerald-500/[0.06] px-2 py-0.5 font-mono text-[10.5px] font-medium text-emerald-700 dark:text-emerald-400">
-                  actual
+                <span className="rounded-md border border-emerald-500/25 bg-emerald-500/[0.06] px-2 py-0.5 text-[13px] font-medium text-emerald-700 dark:text-emerald-400">
+                  Versión actual
                 </span>
               )}
-              <span className="font-mono text-[11.5px] text-v0-400/70 dark:text-v0-500/70">
+              <span className=" text-[13px] text-v0-500 dark:text-v0-300">
                 {entry.date}
               </span>
             </div>
-            <p className="mb-4 text-[13.5px] text-v0-600 dark:text-v0-300">{entry.title}</p>
+            <p className="mb-4 text-[16px] text-v0-700 dark:text-v0-300">{entry.title}</p>
 
             <ul className="space-y-2">
               {entry.changes.map((c, j) => {
@@ -63,13 +62,13 @@ export function ChangelogPage() {
                 return (
                   <li
                     key={j}
-                    className="flex items-start gap-3 rounded-lg border border-v0-150/30 bg-v0-50 px-4 py-2.5 dark:border-v0-800/30 dark:bg-v0-900"
+                    className="flex items-start gap-3 rounded-lg border border-v0-150 bg-v0 px-4 py-3 dark:border-v0-800 dark:bg-v0-900"
                   >
-                    <span className={`mt-0.5 inline-flex items-center gap-1.5 rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.05em] ${meta.chip}`}>
-                      <Icon size={10} strokeWidth={2.2} />
+                    <span className={`mt-0.5 inline-flex items-center gap-1.5 rounded border px-1.5 py-0.5 text-[13px] font-medium ${meta.chip}`}>
+                      <Icon size={12} strokeWidth={2.2} aria-hidden="true" />
                       {meta.label}
                     </span>
-                    <span className="flex-1 text-[13px] leading-relaxed text-v0-700 dark:text-v0-200">
+                    <span className="flex-1 text-[15px] leading-relaxed text-v0-800 dark:text-v0-200">
                       {c.text}
                     </span>
                   </li>

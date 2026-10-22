@@ -1,7 +1,8 @@
+/* eslint-disable no-loss-of-precision -- coeficientes publicados con más dígitos de los que representa un double; se conservan tal cual. */
 // =====================================================
 // Statix - Utilidades matemáticas
 // =====================================================
-import { SQRT_2PI } from '@/constants';
+import { SQRT_2PI, LN_SQRT_2PI } from '@/constants';
 
 // -----------------------------------------------------
 // Función Gamma (Lanczos approximation)
@@ -26,9 +27,22 @@ export function gamma(z: number): number {
   return SQRT_2PI * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
 }
 
-/** Logaritmo de la función Gamma */
+/**
+ * Logaritmo de |Γ(z)| calculado directamente en espacio logarítmico (Lanczos).
+ * No desborda para z > 171 (donde Γ(z) = Infinity en doble precisión).
+ * Para z < 0.5 usa la fórmula de reflexión: Γ(z)Γ(1−z) = π / sin(πz).
+ */
 export function logGamma(z: number): number {
-  return Math.log(gamma(z));
+  if (z < 0.5) {
+    return Math.log(Math.PI / Math.abs(Math.sin(Math.PI * z))) - logGamma(1 - z);
+  }
+  z -= 1;
+  let x = LANCZOS_C[0];
+  for (let i = 1; i < LANCZOS_G + 2; i++) {
+    x += LANCZOS_C[i] / (z + i);
+  }
+  const t = z + LANCZOS_G + 0.5;
+  return LN_SQRT_2PI + (z + 0.5) * Math.log(t) - t + Math.log(x);
 }
 
 // -----------------------------------------------------
@@ -42,7 +56,13 @@ export function logCombination(n: number, k: number): number {
 export function combination(n: number, k: number): number {
   const logC = logCombination(n, k);
   if (!isFinite(logC)) return 0;
-  return Math.exp(logC);
+  const c = Math.exp(logC);
+  // Para argumentos enteros el resultado es entero: redondear mientras el error
+  // relativo de exp(log C) sea muy inferior a 0.5 unidades
+  if (Number.isInteger(n) && Number.isInteger(k) && c < 1e9) {
+    return Math.round(c);
+  }
+  return c;
 }
 
 // -----------------------------------------------------
@@ -54,32 +74,92 @@ export function normalPdf(x: number, mu = 0, sigma = 1): number {
   return Math.exp(-0.5 * z * z) / (sigma * SQRT_2PI);
 }
 
-/** CDF normal estándar usando erf */
+/**
+ * CDF normal: P(X ≤ x) = ½·erfc(−z/√2).
+ * Usar erfc (y no 1 + erf) conserva la precisión relativa en la cola izquierda.
+ */
 export function normalCdf(x: number, mu = 0, sigma = 1): number {
   const z = (x - mu) / sigma;
-  return 0.5 * (1 + erf(z / Math.SQRT2));
+  return 0.5 * erfc(-z / Math.SQRT2);
 }
 
-/** Aproximación Abramowitz & Stegun para erf */
+/**
+ * Función de supervivencia normal: P(X > x) = ½·erfc(z/√2).
+ * Preferir sobre 1 − normalCdf(x) en la cola derecha (evita cancelación).
+ */
+export function normalSurvival(x: number, mu = 0, sigma = 1): number {
+  const z = (x - mu) / sigma;
+  return 0.5 * erfc(z / Math.SQRT2);
+}
+
+// Coeficientes de Chebyshev para erfc (Numerical Recipes 3ª ed., erfccheb)
+const ERFC_COF = [
+  -1.3026537197817094, 6.4196979235649026e-1, 1.9476473204185836e-2,
+  -9.561514786808631e-3, -9.46595344482036e-4, 3.66839497852761e-4,
+  4.2523324806907e-5, -2.0278578112534e-5, -1.624290004647e-6,
+  1.30365583558e-6, 1.5626441722e-8, -8.5238095915e-8, 6.529054439e-9,
+  5.059343495e-9, -9.91364156e-10, -2.27365122e-10, 9.6467911e-11,
+  2.394038e-12, -6.886027e-12, 8.94487e-13, 3.13092e-13, -1.12708e-13,
+  3.81e-16, 7.106e-15, -1.523e-15, -9.4e-17, 1.21e-16, -2.8e-17,
+];
+
+/** erfc(z) para z ≥ 0 mediante expansión de Chebyshev (error relativo ~1e-15). */
+function erfcCheb(z: number): number {
+  const t = 2 / (2 + z);
+  const ty = 4 * t - 2;
+  let d = 0;
+  let dd = 0;
+  for (let j = ERFC_COF.length - 1; j > 0; j--) {
+    const tmp = d;
+    d = ty * d - dd + ERFC_COF[j];
+    dd = tmp;
+  }
+  return t * Math.exp(-z * z + 0.5 * (ERFC_COF[0] + ty * d) - dd);
+}
+
+/** Función error complementaria erfc(x) = 1 − erf(x), precisa en ambas colas. */
+export function erfc(x: number): number {
+  if (Number.isNaN(x)) return NaN;
+  return x >= 0 ? erfcCheb(x) : 2 - erfcCheb(-x);
+}
+
+/** Función error erf(x). Serie de Taylor cerca de 0 para conservar precisión relativa. */
 export function erf(x: number): number {
-  const sign = x >= 0 ? 1 : -1;
-  x = Math.abs(x);
-  const a1 = 0.254829592;
-  const a2 = -0.284496736;
-  const a3 = 1.421413741;
-  const a4 = -1.453152027;
-  const a5 = 1.061405429;
-  const p = 0.3275911;
-  const t = 1 / (1 + p * x);
-  const y =
-    1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-  return sign * y;
+  if (Number.isNaN(x)) return NaN;
+  const ax = Math.abs(x);
+  if (ax < 0.5) {
+    // erf(x) = 2/√π · Σ (−1)ⁿ x^(2n+1) / (n!·(2n+1))
+    const x2 = x * x;
+    let term = x;
+    let sum = x;
+    for (let n = 1; n < 30; n++) {
+      term *= -x2 / n;
+      const add = term / (2 * n + 1);
+      sum += add;
+      if (Math.abs(add) < 1e-17 * Math.abs(sum)) break;
+    }
+    return (2 / Math.sqrt(Math.PI)) * sum;
+  }
+  return x >= 0 ? 1 - erfcCheb(ax) : erfcCheb(ax) - 1;
 }
 
-/** Cuantil de la normal estándar (inversa de la CDF) — algoritmo de Beasley-Springer-Moro */
+/**
+ * Cuantil de la normal estándar (inversa de la CDF).
+ * Aproximación racional de Acklam (~1e-9) refinada con un paso de Halley
+ * usando erfc, lo que lleva el resultado a precisión de máquina.
+ */
 export function normalQuantile(p: number): number {
   if (p <= 0) return -Infinity;
   if (p >= 1) return Infinity;
+  const x = normalQuantileRational(p);
+  // Paso de Halley: e = Φ(x) − p ; u = e·√(2π)·exp(x²/2)
+  const e = 0.5 * erfc(-x / Math.SQRT2) - p;
+  const u = e * SQRT_2PI * Math.exp((x * x) / 2);
+  const refined = x - u / (1 + (x * u) / 2);
+  return Number.isFinite(refined) ? refined : x;
+}
+
+function normalQuantileRational(p: number): number {
 
   const a = [
     -3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2,
@@ -137,8 +217,10 @@ export function poissonPmf(lambda: number, k: number): number {
 // Beta incompleta regularizada  I_x(a, b)  (Numerical Recipes)
 // -----------------------------------------------------
 function betacf(a: number, b: number, x: number): number {
-  const MAXIT = 200;
-  const EPS = 3e-12;
+  // El nº de iteraciones necesario crece como O(√max(a,b)); se deja margen
+  // amplio para gl grandes (p. ej. t con gl ~ 1e6). El bucle corta al converger.
+  const MAXIT = 10000;
+  const EPS = 3e-14;
   const FPMIN = 1e-300;
   const qab = a + b;
   const qap = a + 1;
@@ -180,6 +262,52 @@ export function incompleteBeta(x: number, a: number, b: number): number {
     return (front * betacf(a, b, x)) / a;
   }
   return 1 - (front * betacf(b, a, 1 - x)) / b;
+}
+
+// -----------------------------------------------------
+// Distribución t de Student
+// -----------------------------------------------------
+/** Cola derecha P(T > t) para t ≥ 0:  ½·I_{df/(df+t²)}(df/2, ½). */
+function tUpperTail(t: number, df: number): number {
+  if (!Number.isFinite(t)) return 0;
+  const x = df / (df + t * t);
+  return 0.5 * incompleteBeta(x, df / 2, 0.5);
+}
+
+/** CDF de la t de Student con df grados de libertad: P(T ≤ t). */
+export function tCdf(t: number, df: number): number {
+  if (Number.isNaN(t) || !(df > 0)) return NaN;
+  if (t === 0) return 0.5;
+  const tail = tUpperTail(Math.abs(t), df);
+  return t > 0 ? 1 - tail : tail;
+}
+
+/**
+ * Cuantil de la t de Student: valor t tal que P(T ≤ t) = p.
+ * Bisección sobre la cola (sin cancelación 1 − p) con acotamiento adaptativo;
+ * robusto para df ≥ 1 (incluye Cauchy, df = 1).
+ */
+export function tQuantile(p: number, df: number): number {
+  if (Number.isNaN(p) || !(df > 0)) return NaN;
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  if (p === 0.5) return 0;
+  if (p < 0.5) return -tQuantile(1 - p, df);
+  const target = 1 - p; // probabilidad de la cola derecha
+  // Acotar: partir del cuantil normal y duplicar hasta superar la cola
+  let lo = 0;
+  let hi = Math.max(1, normalQuantile(p));
+  while (tUpperTail(hi, df) > target && hi < 1e300) {
+    lo = hi;
+    hi *= 2;
+  }
+  for (let i = 0; i < 200; i++) {
+    const mid = 0.5 * (lo + hi);
+    if (tUpperTail(mid, df) > target) lo = mid;
+    else hi = mid;
+    if (hi - lo <= 1e-14 * hi) break;
+  }
+  return 0.5 * (lo + hi);
 }
 
 /** CDF de la distribución F con d1, d2 grados de libertad: P(F ≤ f). */
@@ -260,25 +388,261 @@ const Q_TABLE_01: number[][] = [
 ];
 
 /**
- * Valor crítico q del rango studentizado para Tukey.
- * k = nº de grupos (2..10), dfError = gl del error, alpha = 0.05 o 0.01.
- * Interpola linealmente en gl y hace clamp fuera de la tabla.
+ * Busca q en la tabla (k = 2..10, α ∈ {0.05, 0.01}).
+ * Interpola en 1/gl (interpolación armónica, la recomendada para estas tablas),
+ * lo que también permite interpolar correctamente entre gl = 120 y gl = ∞.
  */
-export function studentizedRangeQ(k: number, dfError: number, alpha: number): number {
+function studentizedRangeQTable(k: number, dfError: number, alpha: number): number {
   const table = alpha <= 0.01 ? Q_TABLE_01 : Q_TABLE_05;
   const col = Math.min(Math.max(Math.round(k), 2), 10) - 2; // k=2 -> col 0
-  // localizar el gl en Q_DF
   if (dfError <= Q_DF[0]) return table[0][col];
   for (let i = 1; i < Q_DF.length; i++) {
     const upper = Q_DF[i];
-    if (dfError <= upper || upper === Infinity) {
+    if (dfError <= upper) {
       const lowerDf = Q_DF[i - 1];
       const lowerQ = table[i - 1][col];
-      if (upper === Infinity) return lowerQ; // clamp a la última fila finita
       const upperQ = table[i][col];
-      const t = (dfError - lowerDf) / (upper - lowerDf);
+      // 1/∞ = 0, por lo que el último tramo queda bien definido
+      const t = (1 / lowerDf - 1 / dfError) / (1 / lowerDf - 1 / upper);
       return lowerQ + t * (upperQ - lowerQ);
     }
   }
   return table[table.length - 1][col];
+}
+
+// -----------------------------------------------------
+// Rango studentizado — cálculo numérico (Copenhaver & Holland, 1988;
+// misma formulación que ptukey/qtukey de R). Una sola familia de rangos (rr = 1).
+// -----------------------------------------------------
+const WPROB_XLEG = [
+  0.981560634246719250690549090149, 0.904117256370474856678465866119,
+  0.769902674194304687036893833213, 0.587317954286617447296702418941,
+  0.367831498998180193752691536644, 0.125233408511468915472441369464,
+];
+const WPROB_ALEG = [
+  0.047175336386511827194615961485, 0.106939325995318430960254718194,
+  0.160078328543346226334652529543, 0.20316742672306592174906445581,
+  0.233492536538354808760849898925, 0.249147045813402785000562436043,
+];
+
+/** P(rango de cc normales estándar < w)  (gl = ∞). */
+function studentizedRangeWprob(w: number, cc: number): number {
+  const nleg = 12;
+  const ihalf = 6;
+  const C1 = -30;
+  const C2 = -50;
+  const C3 = 60;
+  const bb = 8;
+  const wlar = 3;
+  const qsqz = w * 0.5;
+  if (qsqz >= bb) return 1;
+
+  // (2Φ(w/2) − 1)^cc : primer término de la forma de Hartley
+  let prW = 2 * normalCdf(qsqz) - 1;
+  prW = prW >= Math.exp(C2 / cc) ? Math.pow(prW, cc) : 0;
+
+  const wincr = w > wlar ? 2 : 3;
+  let blb = qsqz;
+  const binc = (bb - qsqz) / wincr;
+  let bub = blb + binc;
+  let einsum = 0;
+  const cc1 = cc - 1;
+  for (let wi = 1; wi <= wincr; wi++) {
+    let elsum = 0;
+    const a = 0.5 * (bub + blb);
+    const b = 0.5 * (bub - blb);
+    for (let jj = 1; jj <= nleg; jj++) {
+      let j: number;
+      let xx: number;
+      if (ihalf < jj) {
+        j = nleg - jj + 1;
+        xx = WPROB_XLEG[j - 1];
+      } else {
+        j = jj;
+        xx = -WPROB_XLEG[j - 1];
+      }
+      const ac = a + b * xx;
+      const qexpo = ac * ac;
+      if (qexpo > C3) break;
+      const pplus = 2 * normalCdf(ac);
+      const pminus = 2 * normalCdf(ac, w, 1);
+      let rinsum = pplus * 0.5 - pminus * 0.5;
+      if (rinsum >= Math.exp(C1 / cc1)) {
+        rinsum = WPROB_ALEG[j - 1] * Math.exp(-(0.5 * qexpo)) * Math.pow(rinsum, cc1);
+        elsum += rinsum;
+      }
+    }
+    elsum *= (2 * b * cc) / SQRT_2PI;
+    einsum += elsum;
+    blb = bub;
+    bub += binc;
+  }
+  prW += einsum;
+  if (prW <= Math.exp(C1)) return 0;
+  return Math.min(1, prW);
+}
+
+const PTUKEY_XLEGQ = [
+  0.98940093499164993259615417345, 0.944575023073232576077988415535,
+  0.865631202387831743880467897712, 0.755404408355003033895101194847,
+  0.617876244402643748446671764049, 0.458016777657227386342419442984,
+  0.28160355077925891323046050146, 0.950125098376374401853193354250e-1,
+];
+const PTUKEY_ALEGQ = [
+  0.27152459411754094851780572456e-1, 0.622535239386478928628438369944e-1,
+  0.951585116824927848099251076022e-1, 0.124628971255533872052476282192,
+  0.149595988816576732081501730547, 0.16915651939500253818931207903,
+  0.182603415044923588866763667969, 0.189450610455068496285396723208,
+];
+
+/**
+ * CDF del rango studentizado: P(Q ≤ q) con k medias y df gl del error.
+ * Requiere k ≥ 2 y df ≥ 2 (df = ∞ admitido). Devuelve NaN fuera de dominio.
+ */
+export function studentizedRangeCdf(q: number, k: number, df: number): number {
+  if (Number.isNaN(q) || k < 2 || df < 2) return NaN;
+  if (q <= 0) return 0;
+  if (!Number.isFinite(q)) return 1;
+  if (df > 25000) return studentizedRangeWprob(q, k);
+
+  const nlegq = 16;
+  const ihalfq = 8;
+  const eps1 = -30;
+  const eps2 = 1e-14;
+  const f2 = df * 0.5;
+  let f2lf = f2 * Math.log(df) - df * Math.LN2 - logGamma(f2);
+  const f21 = f2 - 1;
+  const ff4 = df * 0.25;
+  let ulen: number;
+  if (df <= 100) ulen = 1;
+  else if (df <= 800) ulen = 0.5;
+  else if (df <= 5000) ulen = 0.25;
+  else ulen = 0.125;
+  f2lf += Math.log(ulen);
+
+  let ans = 0;
+  for (let i = 1; i <= 50; i++) {
+    let otsum = 0;
+    const twa1 = (2 * i - 1) * ulen;
+    for (let jj = 1; jj <= nlegq; jj++) {
+      let j: number;
+      let t1: number;
+      if (ihalfq < jj) {
+        j = jj - ihalfq - 1;
+        t1 = f2lf + f21 * Math.log(twa1 + PTUKEY_XLEGQ[j] * ulen)
+          - (PTUKEY_XLEGQ[j] * ulen + twa1) * ff4;
+      } else {
+        j = jj - 1;
+        t1 = f2lf + f21 * Math.log(twa1 - PTUKEY_XLEGQ[j] * ulen)
+          + (PTUKEY_XLEGQ[j] * ulen - twa1) * ff4;
+      }
+      if (t1 >= eps1) {
+        const qsqz = ihalfq < jj
+          ? q * Math.sqrt((PTUKEY_XLEGQ[j] * ulen + twa1) * 0.5)
+          : q * Math.sqrt((-(PTUKEY_XLEGQ[j] * ulen) + twa1) * 0.5);
+        const wprb = studentizedRangeWprob(qsqz, k);
+        otsum += wprb * PTUKEY_ALEGQ[j] * Math.exp(t1);
+      }
+    }
+    // al menos 1/ulen intervalos para no perder área en la cola izquierda
+    if (i * ulen >= 1 && otsum <= eps2) break;
+    ans += otsum;
+  }
+  return Math.min(1, ans);
+}
+
+/**
+ * Cuantil del rango studentizado: q tal que P(Q ≤ q) = p.
+ * Bisección acotada (la CDF es monótona). Requiere k ≥ 2 y df ≥ 2.
+ */
+export function studentizedRangeQuantile(p: number, k: number, df: number): number {
+  if (Number.isNaN(p) || k < 2 || df < 2) return NaN;
+  if (p <= 0) return 0;
+  if (p >= 1) return Infinity;
+  let lo = 0;
+  let hi = 4;
+  while (studentizedRangeCdf(hi, k, df) < p && hi < 1e4) {
+    lo = hi;
+    hi *= 2;
+  }
+  for (let i = 0; i < 60; i++) {
+    const mid = 0.5 * (lo + hi);
+    if (studentizedRangeCdf(mid, k, df) < p) lo = mid;
+    else hi = mid;
+    if (hi - lo <= 1e-7 * hi) break;
+  }
+  return 0.5 * (lo + hi);
+}
+
+/** Resultado detallado del valor crítico q de Tukey. */
+export interface StudentizedRangeQInfo {
+  q: number;
+  /** Origen del valor: tabla impresa o cálculo numérico (ptukey). */
+  method: 'table' | 'numeric';
+  /** true si (k, α) no están cubiertos por la tabla (k > 10 o α ∉ {0.05, 0.01}). */
+  outOfTable: boolean;
+  /** true si el valor no es fiable (fuera de tabla y sin cálculo numérico posible). */
+  approximate: boolean;
+  /** Aviso en español para mostrar al usuario, si procede. */
+  warning?: string;
+}
+
+const isTableAlpha = (alpha: number) =>
+  Math.abs(alpha - 0.05) < 1e-9 || Math.abs(alpha - 0.01) < 1e-9;
+
+/**
+ * Valor crítico q del rango studentizado para Tukey, con metadatos.
+ * - Usa la tabla cuando k ∈ 2..10 y α ∈ {0.05, 0.01}.
+ * - Fuera de la tabla calcula q numéricamente (requiere gl ≥ 2).
+ * - Si no es posible (gl < 2 fuera de tabla) recurre a la tabla con clamp y
+ *   lo marca como aproximado con un aviso.
+ */
+export function studentizedRangeQInfo(
+  k: number,
+  dfError: number,
+  alpha: number,
+): StudentizedRangeQInfo {
+  const kk = Math.round(k);
+  const inTable = kk >= 2 && kk <= 10 && isTableAlpha(alpha);
+  if (inTable) {
+    return {
+      q: studentizedRangeQTable(kk, dfError, alpha),
+      method: 'table',
+      outOfTable: false,
+      approximate: false,
+    };
+  }
+  const reason = kk < 2
+    ? `k = ${kk} no es válido (se requieren al menos 2 grupos)`
+    : kk > 10
+      ? `k = ${kk} supera la tabla (k ≤ 10)`
+      : `α = ${alpha} no está en la tabla (solo 0.05 y 0.01)`;
+  if (kk >= 2 && dfError >= 2 && alpha > 0 && alpha < 1) {
+    const q = studentizedRangeQuantile(1 - alpha, kk, dfError);
+    if (Number.isFinite(q)) {
+      return {
+        q,
+        method: 'numeric',
+        outOfTable: true,
+        approximate: false,
+        warning: `${reason}: q calculado numéricamente (integración de la distribución del rango studentizado).`,
+      };
+    }
+  }
+  return {
+    q: studentizedRangeQTable(kk, dfError, alpha),
+    method: 'table',
+    outOfTable: true,
+    approximate: true,
+    warning: `${reason} y no se pudo calcular numéricamente (se requieren gl ≥ 2): se usa el valor más cercano de la tabla, que es solo aproximado.`,
+  };
+}
+
+/**
+ * Valor crítico q del rango studentizado para Tukey.
+ * Tabla para k = 2..10 y α ∈ {0.05, 0.01}; cálculo numérico en otro caso.
+ * Ver studentizedRangeQInfo para saber si el valor salió de la tabla o es aproximado.
+ */
+export function studentizedRangeQ(k: number, dfError: number, alpha: number): number {
+  return studentizedRangeQInfo(k, dfError, alpha).q;
 }

@@ -57,6 +57,8 @@ export const meanEstimationSchema = z.object({
   xBar: z.coerce.number().finite(),
   s: z.coerce.number().positive('Debe ser positivo'),
   confidence: z.coerce.number().min(0.5).max(0.9999),
+  // true: s es σ poblacional conocida (IC con z); por defecto se usa t con n−1 gl
+  sigmaKnown: z.boolean().optional(),
 });
 
 export const proportionEstimationSchema = z.object({

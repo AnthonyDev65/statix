@@ -2,14 +2,15 @@
 // Statix - Servicio de cálculos estadísticos
 // =====================================================
 import {
-  combination,
   logCombination,
   normalCdf,
+  normalSurvival,
   normalPdf,
   normalQuantile,
+  tQuantile,
   fCdf,
   fQuantile,
-  studentizedRangeQ,
+  studentizedRangeQInfo,
 } from '@/utils/math.utils';
 import { LIMITS } from '@/constants';
 import type {
@@ -21,6 +22,7 @@ import type {
   NormalInputs,
   NormalResults,
   ProportionEstimationInputs,
+  ProportionEstimationResults,
   EstimationResults,
   AnovaOneWayResult,
   AnovaTableRow,
@@ -33,21 +35,44 @@ import type {
 // =====================================================
 // DISTRIBUCIÓN BINOMIAL
 // =====================================================
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+/**
+ * P(X = x) calculada en espacio logarítmico para no desbordar con n grande:
+ * log P = log C(n,x) + x·log p + (n−x)·log(1−p).
+ * Los casos p = 0 y p = 1 (distribución degenerada) se tratan de forma exacta.
+ */
 export function binomialPmf(n: number, p: number, x: number): number {
   if (x < 0 || x > n) return 0;
-  return combination(n, x) * Math.pow(p, x) * Math.pow(1 - p, n - x);
+  if (p <= 0) return x === 0 ? 1 : 0;
+  if (p >= 1) return x === n ? 1 : 0;
+  const logP = logCombination(n, x) + x * Math.log(p) + (n - x) * Math.log1p(-p);
+  return Math.exp(logP);
 }
 
+/** P(X ≤ x): suma directa de la cola inferior. */
 export function binomialCdf(n: number, p: number, x: number): number {
+  if (x < 0) return 0;
+  if (x >= n) return 1;
   let sum = 0;
   for (let k = 0; k <= x; k++) {
     sum += binomialPmf(n, p, k);
   }
-  return Math.min(1, sum);
+  return clamp01(sum);
 }
 
+/**
+ * P(X ≥ x): suma directa de la cola superior (no 1 − CDF), lo que conserva
+ * la precisión relativa cuando la probabilidad es muy pequeña.
+ */
 export function binomialSurvival(n: number, p: number, x: number): number {
-  return 1 - binomialCdf(n, p, x - 1);
+  if (x <= 0) return 1;
+  if (x > n) return 0;
+  let sum = 0;
+  for (let k = n; k >= x; k--) {
+    sum += binomialPmf(n, p, k);
+  }
+  return clamp01(sum);
 }
 
 export function calculateBinomial(input: BinomialInputs): BinomialResults {
@@ -90,21 +115,33 @@ export function hypergeometricCdf(
   n: number,
   x: number,
 ): number {
-  const upper = Math.min(x, n, K);
+  const lowerSupport = Math.max(0, n - (N - K));
+  const upperSupport = Math.min(n, K);
+  if (x < lowerSupport) return 0;
+  if (x >= upperSupport) return 1;
   let sum = 0;
-  for (let k = 0; k <= upper; k++) {
+  for (let k = lowerSupport; k <= x; k++) {
     sum += hypergeometricPmf(N, K, n, k);
   }
-  return Math.min(1, sum);
+  return clamp01(sum);
 }
 
+/** P(X ≥ x): suma directa de la cola superior (sin cancelación de 1 − CDF). */
 export function hypergeometricSurvival(
   N: number,
   K: number,
   n: number,
   x: number,
 ): number {
-  return 1 - hypergeometricCdf(N, K, n, x - 1);
+  const lowerSupport = Math.max(0, n - (N - K));
+  const upperSupport = Math.min(n, K);
+  if (x <= lowerSupport) return 1;
+  if (x > upperSupport) return 0;
+  let sum = 0;
+  for (let k = upperSupport; k >= x; k--) {
+    sum += hypergeometricPmf(N, K, n, k);
+  }
+  return clamp01(sum);
 }
 
 export function calculateHypergeometric(
@@ -156,7 +193,8 @@ export function calculateNormal(input: NormalInputs): NormalResults {
       break;
     }
     case 'right-tail': {
-      probability = 1 - normalCdf(x, mu, sigma);
+      // Función complementaria: precisa aunque la probabilidad sea minúscula
+      probability = normalSurvival(x, mu, sigma);
       bounds.a = x;
       bounds.b = mu + 4 * sigma;
       break;
@@ -164,7 +202,10 @@ export function calculateNormal(input: NormalInputs): NormalResults {
     case 'between': {
       const a = Math.min(x, x2 ?? x);
       const b = Math.max(x, x2 ?? x);
-      probability = normalCdf(b, mu, sigma) - normalCdf(a, mu, sigma);
+      // En la cola derecha restar supervivencias evita la cancelación de 1 − ε
+      probability = a > mu
+        ? normalSurvival(a, mu, sigma) - normalSurvival(b, mu, sigma)
+        : normalCdf(b, mu, sigma) - normalCdf(a, mu, sigma);
       isBetween = true;
       bounds.a = a;
       bounds.b = b;
@@ -208,20 +249,41 @@ function zCriticalForConfidence(confidence: number): number {
   return normalQuantile(1 - alpha / 2);
 }
 
+/** Valor crítico t_{α/2, df} para el nivel de confianza dado. */
+function tCriticalForConfidence(confidence: number, df: number): number {
+  const alpha = 1 - confidence;
+  return tQuantile(1 - alpha / 2, df);
+}
+
+/**
+ * IC para la media.
+ * - Por defecto s es la desviación muestral → t de Student con n − 1 gl.
+ * - Con sigmaKnown = true, s es σ poblacional conocida → normal z.
+ * `zCritical` se mantiene por compatibilidad y contiene el valor crítico usado
+ * (z o t); consultar `criticalKind` para saber cuál.
+ */
 export function calculateMeanEstimation(
   input: MeanEstimationInputs,
 ): EstimationResults {
-  const { n, s, confidence } = input;
+  const { n, s, confidence, sigmaKnown = false } = input;
   const standardError = s / Math.sqrt(n);
-  const zCritical = zCriticalForConfidence(confidence);
-  const marginOfError = zCritical * standardError;
+  // Con n < 2 y σ desconocida no hay gl: tQuantile devuelve NaN (el esquema exige n ≥ 2)
+  const useZ = sigmaKnown;
+  const df = useZ ? undefined : n - 1;
+  const critical = useZ
+    ? zCriticalForConfidence(confidence)
+    : tCriticalForConfidence(confidence, n - 1);
+  const marginOfError = critical * standardError;
   // Nota: xBar no entra en el ancho del IC, sólo en el centro
   // devolvemos bounds con centro en xBar
   // (se ajustan al renderizar con xBar)
   return {
     standardError,
     marginOfError,
-    zCritical,
+    zCritical: critical,
+    critical,
+    criticalKind: useZ ? 'z' : 't',
+    df,
     lowerBound: 0,
     upperBound: 0,
     confidenceLevel: confidence,
@@ -244,21 +306,49 @@ export function calculateMeanEstimationCentered(
   };
 }
 
+/**
+ * IC para la proporción.
+ * - Wald: p̂ ± z·√(p̂(1−p̂)/n), recortado a [0, 1] (waldClamped indica si hubo recorte).
+ * - Wilson (score): (p̂ + z²/2n ± z·√(p̂(1−p̂)/n + z²/4n²)) / (1 + z²/n).
+ *   Mejor cobertura con n pequeño o p̂ cercano a 0 o 1; siempre dentro de [0, 1].
+ */
 export function calculateProportionEstimation(
   input: ProportionEstimationInputs,
-): EstimationResults & { center: number } {
+): ProportionEstimationResults {
   const { n, pHat, confidence } = input;
   const standardError = Math.sqrt((pHat * (1 - pHat)) / n);
   const zCritical = zCriticalForConfidence(confidence);
   const marginOfError = zCritical * standardError;
+
+  // Wald (recortado a [0, 1])
+  const rawLower = pHat - marginOfError;
+  const rawUpper = pHat + marginOfError;
+  const lowerBound = clamp01(rawLower);
+  const upperBound = clamp01(rawUpper);
+  const waldClamped = lowerBound !== rawLower || upperBound !== rawUpper;
+
+  // Wilson
+  const z2 = zCritical * zCritical;
+  const denom = 1 + z2 / n;
+  const wilsonCenter = (pHat + z2 / (2 * n)) / denom;
+  const wilsonHalf =
+    (zCritical / denom) * Math.sqrt((pHat * (1 - pHat)) / n + z2 / (4 * n * n));
+
   return {
     standardError,
     marginOfError,
     zCritical,
-    lowerBound: pHat - marginOfError,
-    upperBound: pHat + marginOfError,
+    critical: zCritical,
+    criticalKind: 'z',
+    lowerBound,
+    upperBound,
     confidenceLevel: confidence,
     center: pHat,
+    // Con p̂ = 0 (o 1) el límite de Wilson es exactamente 0 (o 1); se fija para evitar ruido de redondeo
+    wilsonLower: pHat <= 0 ? 0 : clamp01(wilsonCenter - wilsonHalf),
+    wilsonUpper: pHat >= 1 ? 1 : clamp01(wilsonCenter + wilsonHalf),
+    wilsonCenter,
+    waldClamped,
   };
 }
 
@@ -346,12 +436,59 @@ export function calculateAnovaOneWay(
 // =====================================================
 // ANOVA — DOS FACTORES
 // =====================================================
+/**
+ * Comprueba que el diseño de dos factores sea balanceado y rectangular:
+ * al menos una fila, todas las filas con el mismo nº de columnas (≥ 1) y
+ * todas las celdas no vacías con el mismo nº de réplicas.
+ */
+export function isBalancedDesign(matrix: number[][][]): boolean {
+  if (!Array.isArray(matrix) || matrix.length === 0) return false;
+  const b = matrix[0]?.length ?? 0;
+  if (b === 0) return false;
+  const r = matrix[0][0]?.length ?? 0;
+  if (r === 0) return false;
+  return matrix.every(
+    (row) => row.length === b && row.every((cell) => cell.length === r),
+  );
+}
+
+/** Explica en español por qué un diseño no es balanceado (null si lo es). */
+function unbalancedReason(matrix: number[][][]): string | null {
+  if (!Array.isArray(matrix) || matrix.length === 0 || (matrix[0]?.length ?? 0) === 0) {
+    return 'ANOVA de dos factores: la tabla de datos está vacía.';
+  }
+  const b = matrix[0].length;
+  for (let i = 0; i < matrix.length; i++) {
+    if (matrix[i].length !== b) {
+      return `ANOVA de dos factores: la fila ${i + 1} tiene ${matrix[i].length} columnas y se esperaban ${b}.`;
+    }
+  }
+  for (let i = 0; i < matrix.length; i++) {
+    for (let j = 0; j < b; j++) {
+      if (matrix[i][j].length === 0) {
+        return `ANOVA de dos factores: la celda (fila ${i + 1}, columna ${j + 1}) está vacía.`;
+      }
+    }
+  }
+  if (!isBalancedDesign(matrix)) {
+    const r = matrix[0][0].length;
+    return `ANOVA de dos factores: el diseño no está balanceado; todas las celdas deben tener el mismo número de réplicas (la primera tiene ${r}).`;
+  }
+  return null;
+}
+
+/**
+ * ANOVA de dos factores para diseños balanceados (mismo nº de réplicas r por celda).
+ * Lanza un Error con mensaje en español si el diseño no es balanceado o hay celdas vacías.
+ */
 export function calculateAnovaTwoWay(
   matrix: number[][][],
   alpha: number,
   rowLabels: string[],
   colLabels: string[],
 ): AnovaTwoWayResult {
+  const reason = unbalancedReason(matrix);
+  if (reason) throw new Error(reason);
   const a = matrix.length;
   const b = matrix[0].length;
   const r = matrix[0][0].length; // réplicas por celda (asumida constante)
@@ -468,7 +605,8 @@ export function tukeyHSD(
   alpha: number,
 ): TukeyResult {
   const k = input.length;
-  const q = studentizedRangeQ(k, dfError, alpha);
+  const qInfo = studentizedRangeQInfo(k, dfError, alpha);
+  const q = qInfo.q;
   const means = input.map((g) => ({
     label: g.label,
     n: g.values.length,
@@ -490,5 +628,13 @@ export function tukeyHSD(
       });
     }
   }
-  return { q, comparisons, alpha };
+  return {
+    q,
+    comparisons,
+    alpha,
+    qMethod: qInfo.method,
+    outOfTable: qInfo.outOfTable,
+    approximate: qInfo.approximate,
+    warning: qInfo.warning,
+  };
 }

@@ -97,14 +97,20 @@ export const ESTIMATION_FORMULAS: FormulaDef[] = [
   {
     id: 'mean-me',
     label: 'Margen de Error',
-    latex: 'E = z_{\\alpha/2} \\cdot \\dfrac{s}{\\sqrt{n}}',
-    description: 'Mitad del ancho del intervalo de confianza.',
+    latex: 'E = t_{\\alpha/2,\\,n-1} \\cdot \\dfrac{s}{\\sqrt{n}}',
+    description: 'Mitad del ancho del intervalo de confianza (t de Student con n − 1 gl, pues s es muestral).',
   },
   {
     id: 'mean-ic',
     label: 'Intervalo de Confianza para la Media',
-    latex: 'IC = \\bar{x} \\pm z_{\\alpha/2} \\cdot \\dfrac{s}{\\sqrt{n}}',
-    description: 'Rango donde se encuentra el verdadero valor de la media con la confianza dada.',
+    latex: 'IC = \\bar{x} \\pm t_{\\alpha/2,\\,n-1} \\cdot \\dfrac{s}{\\sqrt{n}}',
+    description: 'Rango donde se encuentra el verdadero valor de la media con la confianza dada. Con σ desconocida se usa la t de Student con n − 1 grados de libertad.',
+  },
+  {
+    id: 'mean-ic-z',
+    label: 'IC para la Media con σ Conocida',
+    latex: 'IC = \\bar{x} \\pm z_{\\alpha/2} \\cdot \\dfrac{\\sigma}{\\sqrt{n}}',
+    description: 'Solo cuando la desviación poblacional σ es conocida se usa el valor crítico normal z.',
   },
   {
     id: 'prop-se',
@@ -114,9 +120,16 @@ export const ESTIMATION_FORMULAS: FormulaDef[] = [
   },
   {
     id: 'prop-ic',
-    label: 'Intervalo de Confianza para la Proporción',
+    label: 'Intervalo de Confianza para la Proporción (Wald)',
     latex: 'IC = \\hat{p} \\pm z_{\\alpha/2} \\cdot \\sqrt{\\dfrac{\\hat{p}(1-\\hat{p})}{n}}',
-    description: 'Rango donde se encuentra la verdadera proporción poblacional.',
+    description: 'Rango donde se encuentra la verdadera proporción poblacional (límites recortados a [0, 1]).',
+  },
+  {
+    id: 'prop-wilson',
+    label: 'Intervalo de Wilson para la Proporción',
+    latex:
+      'IC = \\dfrac{\\hat{p} + \\dfrac{z^{2}}{2n} \\pm z\\sqrt{\\dfrac{\\hat{p}(1-\\hat{p})}{n} + \\dfrac{z^{2}}{4n^{2}}}}{1 + \\dfrac{z^{2}}{n}}',
+    description: 'Intervalo score de Wilson: mejor cobertura que Wald con n pequeño o p̂ cercano a 0 o 1, y siempre dentro de [0, 1].',
   },
 ];
 

@@ -107,7 +107,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
               <button
                 type="button"
                 onClick={() => handleStep(-1)}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-v0-500/70 transition-all duration-150 hover:bg-v0-200 hover:text-v0-900 active:scale-90 dark:text-v0-300/80 dark:hover:bg-v0-700 dark:hover:text-v0-100"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-v0-500 transition-all duration-150 hover:bg-v0-200 hover:text-v0-900 active:scale-90 dark:text-v0-300 dark:hover:bg-v0-700 dark:hover:text-v0-100"
                 aria-label="Decrementar"
                 tabIndex={-1}
               >
@@ -116,7 +116,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
               <button
                 type="button"
                 onClick={() => handleStep(1)}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-v0-500/70 transition-all duration-150 hover:bg-v0-200 hover:text-v0-900 active:scale-90 dark:text-v0-300/80 dark:hover:bg-v0-700 dark:hover:text-v0-100"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-v0-500 transition-all duration-150 hover:bg-v0-200 hover:text-v0-900 active:scale-90 dark:text-v0-300 dark:hover:bg-v0-700 dark:hover:text-v0-100"
                 aria-label="Incrementar"
                 tabIndex={-1}
               >

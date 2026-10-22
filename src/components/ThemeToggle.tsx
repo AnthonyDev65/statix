@@ -12,7 +12,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      className="relative inline-flex h-10 w-10 items-center justify-center rounded-md text-v0-500/70 transition-all duration-200 hover:bg-v0-75 hover:text-v0-900 active:scale-95 active:bg-v0-100 dark:text-v0-300/80 dark:hover:bg-v0-900 dark:hover:text-v0-100 dark:active:bg-v0-800"
+      className="relative inline-flex h-10 w-10 items-center justify-center rounded-md text-v0-500 transition-all duration-200 hover:bg-v0-75 hover:text-v0-900 active:scale-95 active:bg-v0-100 dark:text-v0-300 dark:hover:bg-v0-900 dark:hover:text-v0-100 dark:active:bg-v0-800"
     >
       <AnimatePresence mode="wait" initial={false}>
         {isDark ? (

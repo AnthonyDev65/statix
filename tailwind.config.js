@@ -53,9 +53,13 @@ export default {
           900: '#0A0A0A',
           950: '#000000',
         },
+        // Azul Vercel: único acento (punto del logo, curvas, enlaces).
         accent: {
           50: '#EFF6FF',
           100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#79B8FF',
+          400: '#3291FF',
           500: '#0070F3',
           600: '#0070F3',
           700: '#0050B3',
@@ -87,6 +91,7 @@ export default {
         elevated:
           '0 0 0 1px rgb(0 0 0 / 0.06), 0 4px 12px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04)',
         glow: '0 0 0 1px rgb(0 112 243 / 0.16), 0 4px 16px -4px rgb(0 112 243 / 0.20)',
+        float: '0 12px 32px -8px rgb(0 0 0 / 0.18), 0 2px 6px -2px rgb(0 0 0 / 0.08)',
         'ring-v0': '0 0 0 4px rgb(10 10 10 / 0.08)',
         'ring-v0-dark': '0 0 0 4px rgb(250 250 250 / 0.10)',
       },

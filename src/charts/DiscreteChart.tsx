@@ -1,5 +1,5 @@
 // =====================================================
-// Statix — ProbabilityChart (Vercel minimal bars)
+// Statix — ProbabilityChart (barras; el valor pedido en color de acento)
 // =====================================================
 import { useMemo } from 'react';
 import {
@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { useTheme } from '@/context/ThemeContext';
 import { formatNumber } from '@/utils/formatters.utils';
+import { chartColors } from './theme';
 
 interface ProbabilityChartProps {
   data: Array<{ x: number; probability: number }>;
@@ -23,12 +24,11 @@ export function ProbabilityChart({
   xLabel = 'x', yLabel = 'P(X = x)', height = 300,
 }: ProbabilityChartProps) {
   const { isDark } = useTheme();
-  const gridColor = isDark ? '#262626' : '#eaeaea';
-  const tickColor = '#737373';
-  const accent = isDark ? '#fafafa' : '#0a0a0a';
-  const subtle = isDark ? '#404040' : '#d4d4d4';
-  const tooltipBg = isDark ? '#0a0a0a' : '#ffffff';
-  const tooltipBorder = isDark ? '#404040' : '#eaeaea';
+  const c = chartColors(isDark);
+  const gridColor = c.grid;
+  const tickColor = c.tick;
+  const accent = c.accent;
+  const subtle = c.subtle;
 
   const enriched = useMemo(
     () =>
@@ -55,7 +55,7 @@ export function ProbabilityChart({
           <XAxis
             dataKey="x"
             stroke={tickColor}
-            tick={{ fontSize: 11, fill: tickColor, fontFamily: 'Geist Mono' }}
+            tick={{ fontSize: 13, fill: tickColor, fontFamily: 'Geist' }}
             tickLine={false}
             axisLine={{ stroke: gridColor }}
             label={
@@ -65,43 +65,43 @@ export function ProbabilityChart({
                     position: 'insideBottom',
                     offset: -2,
                     fill: tickColor,
-                    fontSize: 10,
-                    fontFamily: 'Geist Mono',
+                    fontSize: 13,
+                    fontFamily: 'Geist',
                   }
                 : undefined
             }
           />
           <YAxis
             stroke={tickColor}
-            tick={{ fontSize: 11, fill: tickColor, fontFamily: 'Geist Mono' }}
+            tick={{ fontSize: 13, fill: tickColor, fontFamily: 'Geist' }}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(v: number) => (v <= 0.01 ? v.toExponential(1) : v.toFixed(2))}
+            tickFormatter={(v: number) => (v === 0 ? "0" : v <= 0.01 ? v.toExponential(1) : v.toFixed(2))}
             width={40}
           />
           <Tooltip
-            cursor={{ fill: isDark ? '#171717' : '#f5f5f5' }}
+            cursor={{ fill: c.cursor }}
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;
               const v = payload[0].value as number;
               return (
                 <div
                   style={{
-                    background: tooltipBg,
-                    border: `1px solid ${tooltipBorder}`,
+                    background: c.tooltipBg,
+                    color: c.tooltipText,
                     borderRadius: 8,
-                    fontSize: 12,
+                    fontSize: 13,
                     padding: '8px 12px',
-                    boxShadow: '0 4px 12px -2px rgb(0 0 0 / 0.12)',
+                    boxShadow: c.tooltipShadow,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
-                    <span style={{ color: tickColor, fontFamily: 'Geist Mono' }}>{xLabel} =</span>
-                    <span style={{ color: accent, fontWeight: 600, fontFamily: 'Geist Mono' }}>{label}</span>
+                    <span style={{ color: tickColor, fontFamily: 'Geist' }}>{xLabel} =</span>
+                    <span style={{ color: c.tooltipText, fontWeight: 600 }}>{label}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                    <span style={{ color: tickColor, fontFamily: 'Geist Mono' }}>P</span>
-                    <span style={{ color: accent, fontWeight: 600, fontFamily: 'Geist Mono' }}>
+                    <span style={{ color: tickColor, fontFamily: 'Geist' }}>{yLabel}</span>
+                    <span style={{ color: c.tooltipText, fontWeight: 600 }}>
                       {formatNumber(v, 6)}
                     </span>
                   </div>
@@ -109,7 +109,7 @@ export function ProbabilityChart({
               );
             }}
           />
-          <Bar dataKey="probability" radius={[2, 2, 0, 0]}>
+          <Bar dataKey="probability" radius={[3, 3, 0, 0]}>
             {enriched.map((entry, idx) => (
               <Cell
                 key={`cell-${idx}`}

@@ -23,3 +23,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+__pycache__/
+*.pyc
+
+# Herramientas locales
+.taste-skill/
+
+# Ejercicios locales en Python (fuera del repositorio)
+ejercicios con python/

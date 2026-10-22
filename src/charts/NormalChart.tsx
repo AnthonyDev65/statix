@@ -1,13 +1,14 @@
 // =====================================================
-// Statix — DistributionChart (Vercel normal curve)
+// Statix — DistributionChart (curva normal con el área pedida)
 // =====================================================
 import { useMemo } from 'react';
 import {
-  Area, CartesianGrid, ComposedChart, ReferenceArea, ReferenceLine,
+  Area, CartesianGrid, ComposedChart, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { useTheme } from '@/context/ThemeContext';
 import { formatNumber } from '@/utils/formatters.utils';
+import { chartColors } from './theme';
 
 interface DistributionChartProps {
   data: Array<{ x: number; y: number }>;
@@ -21,37 +22,33 @@ export function DistributionChart({
   data, shaded, mu, sigma, height = 320,
 }: DistributionChartProps) {
   const { isDark } = useTheme();
-  const gridColor = isDark ? '#262626' : '#eaeaea';
-  const tickColor = '#737373';
-  const accent = isDark ? '#fafafa' : '#0a0a0a';
-  const tooltipBg = isDark ? '#0a0a0a' : '#ffffff';
-  const tooltipBorder = isDark ? '#404040' : '#eaeaea';
+  const c = chartColors(isDark);
+  const gridColor = c.grid;
+  const tickColor = c.tick;
+  const accent = c.accent;
 
-  const bounds = useMemo(() => {
-    if (shaded.length === 0) return { start: 0, end: 0 };
-    return { start: shaded[0].x, end: shaded[shaded.length - 1].x };
-  }, [shaded]);
+  // El área sombreada va BAJO la curva (es la probabilidad), no un rectángulo.
+  const merged = useMemo(() => {
+    if (shaded.length === 0) return data.map((d) => ({ ...d, ys: null as number | null }));
+    const start = shaded[0].x;
+    const end = shaded[shaded.length - 1].x;
+    return data.map((d) => ({ ...d, ys: d.x >= start && d.x <= end ? d.y : null }));
+  }, [data, shaded]);
 
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
-          data={data}
+          data={merged}
           margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
         >
-          <defs>
-            <linearGradient id="normalFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={accent} stopOpacity={0.18} />
-              <stop offset="100%" stopColor={accent} stopOpacity={0.0} />
-            </linearGradient>
-          </defs>
           <CartesianGrid strokeDasharray="0" stroke={gridColor} vertical={false} />
           <XAxis
             dataKey="x"
             type="number"
             domain={['dataMin', 'dataMax']}
             stroke={tickColor}
-            tick={{ fontSize: 11, fill: tickColor, fontFamily: 'Geist Mono' }}
+            tick={{ fontSize: 13, fill: tickColor, fontFamily: 'Geist' }}
             tickLine={false}
             axisLine={{ stroke: gridColor }}
             tickFormatter={(v: number) => v.toFixed(1)}
@@ -60,13 +57,13 @@ export function DistributionChart({
               position: 'insideBottom',
               offset: -2,
               fill: tickColor,
-              fontSize: 10,
-              fontFamily: 'Geist Mono',
+              fontSize: 13,
+              fontFamily: 'Geist',
             }}
           />
           <YAxis
             stroke={tickColor}
-            tick={{ fontSize: 11, fill: tickColor, fontFamily: 'Geist Mono' }}
+            tick={{ fontSize: 13, fill: tickColor, fontFamily: 'Geist' }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(v: number) => v.toFixed(3)}
@@ -80,44 +77,45 @@ export function DistributionChart({
               value: `μ = ${mu}`,
               position: 'top',
               fill: accent,
-              fontSize: 10,
-              fontFamily: 'Geist Mono',
+              fontSize: 13,
+              fontFamily: 'Geist',
               fontWeight: 600,
             }}
           />
           <ReferenceLine
             x={mu + sigma}
-            stroke={isDark ? '#404040' : '#d4d4d4'}
+            stroke={c.ref}
             strokeDasharray="2 2"
             label={{
               value: '+1σ',
               position: 'top',
               fill: tickColor,
-              fontSize: 9,
-              fontFamily: 'Geist Mono',
+              fontSize: 13,
+              fontFamily: 'Geist',
             }}
           />
           <ReferenceLine
             x={mu - sigma}
-            stroke={isDark ? '#404040' : '#d4d4d4'}
+            stroke={c.ref}
             strokeDasharray="2 2"
             label={{
               value: '-1σ',
               position: 'top',
               fill: tickColor,
-              fontSize: 9,
-              fontFamily: 'Geist Mono',
+              fontSize: 13,
+              fontFamily: 'Geist',
             }}
           />
-          {shaded.length > 0 && (
-            <ReferenceArea
-              x1={bounds.start}
-              x2={bounds.end}
-              fill={accent}
-              fillOpacity={0.10}
-              stroke="none"
-            />
-          )}
+          <Area
+            type="monotone"
+            dataKey="ys"
+            stroke="none"
+            fill={c.area}
+            fillOpacity={0.35}
+            connectNulls={false}
+            isAnimationActive={false}
+            activeDot={false}
+          />
           <Tooltip
             cursor={{ stroke: accent, strokeWidth: 1, strokeDasharray: '2 2' }}
             content={({ active, payload }) => {
@@ -126,23 +124,23 @@ export function DistributionChart({
               return (
                 <div
                   style={{
-                    background: tooltipBg,
-                    border: `1px solid ${tooltipBorder}`,
+                    background: c.tooltipBg,
+                    color: c.tooltipText,
                     borderRadius: 8,
-                    fontSize: 12,
+                    fontSize: 13,
                     padding: '8px 12px',
-                    boxShadow: '0 4px 12px -2px rgb(0 0 0 / 0.12)',
+                    boxShadow: c.tooltipShadow,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
-                    <span style={{ color: tickColor, fontFamily: 'Geist Mono' }}>x =</span>
-                    <span style={{ color: accent, fontWeight: 600, fontFamily: 'Geist Mono' }}>
+                    <span style={{ color: tickColor, fontFamily: 'Geist' }}>x =</span>
+                    <span style={{ color: accent, fontWeight: 600, fontFamily: 'Geist' }}>
                       {formatNumber(point.x, 4)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                    <span style={{ color: tickColor, fontFamily: 'Geist Mono' }}>f(x) =</span>
-                    <span style={{ color: accent, fontWeight: 600, fontFamily: 'Geist Mono' }}>
+                    <span style={{ color: tickColor, fontFamily: 'Geist' }}>f(x) =</span>
+                    <span style={{ color: accent, fontWeight: 600, fontFamily: 'Geist' }}>
                       {formatNumber(point.y, 5)}
                     </span>
                   </div>
@@ -154,13 +152,13 @@ export function DistributionChart({
             type="monotone"
             dataKey="y"
             stroke={accent}
-            strokeWidth={1.75}
-            fill="url(#normalFill)"
+            strokeWidth={2.25}
+            fill="none"
             dot={false}
             activeDot={{
               r: 3.5,
               fill: accent,
-              stroke: isDark ? '#000' : '#fff',
+              stroke: c.tooltipBg,
               strokeWidth: 2,
             }}
             isAnimationActive

@@ -55,21 +55,27 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     return INDEX.filter((it) => terms.every((t) => it.haystack.includes(t)));
   }, [query]);
 
-  // Al abrir: limpiar y enfocar.
-  useEffect(() => {
+  // Al abrir: limpiar (ajuste de estado durante el render, sin efecto).
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setQuery('');
       setActive(0);
+    }
+  }
+
+  // Al abrir: enfocar.
+  useEffect(() => {
+    if (open) {
       // foco tras el montaje/animación
       const id = window.setTimeout(() => inputRef.current?.focus(), 40);
       return () => window.clearTimeout(id);
     }
   }, [open]);
 
-  // Mantener el índice activo dentro de rango.
-  useEffect(() => {
-    setActive((a) => Math.min(a, Math.max(0, results.length - 1)));
-  }, [results.length]);
+  // Índice activo siempre dentro de rango (los resultados pueden encoger).
+  const activeIndex = Math.min(active, Math.max(0, results.length - 1));
 
   const select = (it: Indexed | undefined) => {
     if (!it) return;
@@ -86,7 +92,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       setActive((a) => Math.max(a - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      select(results[active]);
+      select(results[activeIndex]);
     } else if (e.key === 'Escape') {
       e.preventDefault();
       onClose();
@@ -105,7 +111,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         >
           {/* Overlay */}
           <div
-            className="absolute inset-0 bg-v0-950/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-v0-950/50"
             onClick={onClose}
             aria-hidden
           />
@@ -120,32 +126,32 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             onKeyDown={onKeyDown}
-            className="relative w-full max-w-xl overflow-hidden rounded-xl border border-v0-200/40 bg-v0-50 shadow-elevated dark:border-v0-700/40 dark:bg-v0-900"
+            className="relative w-full max-w-xl overflow-hidden rounded-lg border border-v0-150 bg-v0 shadow-float dark:border-v0-800 dark:bg-v0-900"
           >
             {/* Input */}
-            <div className="flex items-center gap-3 border-b border-v0-150/40 px-4 dark:border-v0-800/40">
-              <Search size={16} strokeWidth={1.9} className="flex-shrink-0 text-v0-400 dark:text-v0-500" />
+            <div className="flex items-center gap-3 border-b border-v0-150 px-4 dark:border-v0-800">
+              <Search size={16} strokeWidth={1.9} className="flex-shrink-0 text-v0-500 dark:text-v0-300" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar teoría: binomial, media, z-score, intervalo…"
-                className="h-12 w-full bg-transparent text-[14px] text-v0-950 placeholder:text-v0-400/70 focus:outline-none dark:text-v0-50 dark:placeholder:text-v0-500/70"
+                className="h-14 w-full bg-transparent text-[16px] text-v0-950 placeholder:text-v0-500 focus:outline-none dark:text-v0-50 dark:placeholder:text-v0-400"
               />
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-v0-400 transition-colors hover:text-v0-700 dark:text-v0-500 dark:hover:text-v0-200"
-                aria-label="Cerrar"
+                className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-v0-600 transition-colors hover:text-v0-700 dark:text-v0-300 dark:hover:text-v0-200"
+                aria-label="Cerrar el buscador"
               >
-                <X size={14} strokeWidth={2} />
+                <X size={16} strokeWidth={2} />
               </button>
             </div>
 
             {/* Resultados */}
             <div className="max-h-[52vh] overflow-y-auto py-2">
               {results.length === 0 ? (
-                <p className="px-4 py-8 text-center text-[13px] text-v0-500/70 dark:text-v0-400">
+                <p className="px-4 py-8 text-center text-[15px] text-v0-600 dark:text-v0-300">
                   Sin resultados para “{query}”.
                 </p>
               ) : (
@@ -157,24 +163,24 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                         onMouseEnter={() => setActive(i)}
                         onClick={() => select(it)}
                         className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                          i === active
+                          i === activeIndex
                             ? 'bg-v0-100 dark:bg-v0-800/60'
                             : 'hover:bg-v0-75 dark:hover:bg-v0-800/30'
                         }`}
                       >
-                        <span className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-v0-200/40 bg-v0-50 dark:border-v0-700/40 dark:bg-v0-900">
+                        <span className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-v0-150 bg-v0-50 dark:border-v0-800 dark:bg-v0-900">
                           <FileText size={13} strokeWidth={1.75} className="text-v0-500 dark:text-v0-300" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[13.5px] font-medium text-v0-950 dark:text-v0-50">
+                          <span className="block truncate text-[15px] font-medium text-v0-950 dark:text-v0-50">
                             {it.article.title}
                           </span>
-                          <span className="block truncate text-[11.5px] text-v0-500/70 dark:text-v0-400">
+                          <span className="block truncate text-[14px] text-v0-600 dark:text-v0-300">
                             {it.moduleLabel} · {it.article.summary}
                           </span>
                         </span>
-                        {i === active && (
-                          <CornerDownLeft size={13} strokeWidth={1.9} className="flex-shrink-0 text-v0-400 dark:text-v0-500" />
+                        {i === activeIndex && (
+                          <CornerDownLeft size={13} strokeWidth={1.9} className="flex-shrink-0 text-v0-500 dark:text-v0-300" />
                         )}
                       </button>
                     </li>
@@ -184,11 +190,11 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             </div>
 
             {/* Footer con atajos */}
-            <div className="flex items-center justify-between border-t border-v0-150/40 px-4 py-2 dark:border-v0-800/40">
-              <span className="font-mono text-[10.5px] text-v0-400/70 dark:text-v0-500/70">
+            <div className="flex items-center justify-between border-t border-v0-150 px-4 py-2 dark:border-v0-800">
+              <span className="text-[13px] text-v0-600 dark:text-v0-300">
                 {results.length} resultado{results.length === 1 ? '' : 's'}
               </span>
-              <div className="flex items-center gap-3 font-mono text-[10.5px] text-v0-400/70 dark:text-v0-500/70">
+              <div className="hidden items-center gap-3 text-[13px] text-v0-600 dark:text-v0-300 sm:flex">
                 <span className="flex items-center gap-1"><Key>↑</Key><Key>↓</Key> navegar</span>
                 <span className="flex items-center gap-1"><Key>↵</Key> abrir</span>
                 <span className="flex items-center gap-1"><Key>esc</Key> cerrar</span>
@@ -203,7 +209,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
 
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="inline-flex h-4 min-w-[16px] items-center justify-center rounded border border-v0-200/40 bg-v0-50 px-1 text-[10px] text-v0-500/70 dark:border-v0-700/40 dark:bg-v0-800 dark:text-v0-300/80">
+    <kbd className="inline-flex h-5 min-w-[20px] items-center justify-center rounded border border-v0-150 bg-v0-50 px-1 font-sans text-[13px] text-v0-600 dark:border-v0-800 dark:bg-v0-800 dark:text-v0-300">
       {children}
     </kbd>
   );

@@ -18,10 +18,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2026-10-22',
+    title: 'Interfaz más clara y cálculos más precisos',
+    current: true,
+    changes: [
+      { kind: 'added', text: 'Portada nueva con el tablero de Galton interactivo: mueve n y p y mira cómo la binomial se convierte en la normal.' },
+      { kind: 'added', text: 'Intervalo de confianza para la media con t de Student (y z cuando σ es conocida).' },
+      { kind: 'added', text: 'Intervalo de Wilson para la proporción, más fiable con muestras pequeñas.' },
+      { kind: 'added', text: 'Cada resultado principal se explica en palabras ("pasará unas 19 de cada 100 veces").' },
+      { kind: 'changed', text: 'Menú agrupado por tema (Probabilidad, Inferencia, Aprender) y textos en español.' },
+      { kind: 'changed', text: 'Modos "Calcular" y "Aprender" en lugar de "Simple" y "Completo".' },
+      { kind: 'changed', text: 'Logo renovado: la curva acumulada de la normal forma la S de Statix.' },
+      { kind: 'changed', text: 'La app carga mucho más rápido: cada página se descarga solo cuando la abres.' },
+      { kind: 'fixed', text: 'Binomial e hipergeométrica daban 0 o error con n mayor que 170.' },
+      { kind: 'fixed', text: 'Mayor precisión en las colas de la normal y en los valores críticos de Tukey.' },
+      { kind: 'fixed', text: 'ANOVA de dos factores avisa cuando las celdas no tienen el mismo número de datos.' },
+    ],
+  },
+  {
     version: '1.2.0',
     date: '2026-07-26',
     title: 'Módulo ANOVA',
-    current: true,
     changes: [
       { kind: 'added', text: 'Módulo ANOVA con análisis de un factor y de dos factores (con y sin repetición).' },
       { kind: 'added', text: 'Editor de datos tipo hoja de cálculo: añade y quita columnas y filas, y encabezados editables.' },

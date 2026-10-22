@@ -43,6 +43,7 @@ export function UIModeProvider({ children }: ProviderProps) {
   return <UIModeContext.Provider value={value}>{children}</UIModeContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook junto a su proveedor
 export function useUIMode(): UIModeContextValue {
   const ctx = useContext(UIModeContext);
   if (!ctx) throw new Error('useUIMode debe usarse dentro de <UIModeProvider>');

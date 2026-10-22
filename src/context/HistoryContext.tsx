@@ -67,6 +67,7 @@ export function HistoryProvider({ children }: ProviderProps) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook junto a su proveedor
 export function useHistory(): HistoryContextValue {
   const ctx = useContext(HistoryContext);
   if (!ctx) throw new Error('useHistory debe usarse dentro de <HistoryProvider>');
@@ -74,6 +75,7 @@ export function useHistory(): HistoryContextValue {
 }
 
 // Utilidad para agrupar por tipo
+// eslint-disable-next-line react-refresh/only-export-components -- utilidad ligada al historial
 export function groupByType(
   history: HistoryEntry[],
 ): Record<DistributionType, HistoryEntry[]> {

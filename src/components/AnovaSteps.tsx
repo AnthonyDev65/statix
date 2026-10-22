@@ -52,8 +52,8 @@ export function AnovaSteps({ result }: { result: AnovaOneWayResult }) {
           <MathText>{`$F_{crítico} = F_{${formatProbability(result.alpha, 2)}}(${between.df}, ${within.df}) = ${f(result.fCritical, 4)}$; valor-p $= ${f(result.pValue, 4)}$.`}</MathText>
           <p className="mt-2 font-medium text-v0-900 dark:text-v0-50">
             {result.rejectH0
-              ? '✓ F > F crítico → se rechaza H₀: al menos una media difiere.'
-              : '✕ F ≤ F crítico → no se rechaza H₀: no hay evidencia de diferencias.'}
+              ? 'F > F crítico → se rechaza H₀: al menos una media difiere.'
+              : 'F ≤ F crítico → no se rechaza H₀: no hay evidencia de diferencias.'}
           </p>
         </Step>
       </ol>
@@ -64,11 +64,11 @@ export function AnovaSteps({ result }: { result: AnovaOneWayResult }) {
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-v0-100 font-mono text-[11px] font-semibold text-v0-700 dark:bg-v0-800 dark:text-v0-200">
+      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-v0-100 text-[13px] font-semibold text-v0-700 dark:bg-v0-800 dark:text-v0-200">
         {n}
       </span>
-      <div className="flex-1 space-y-1 text-[13px] leading-relaxed text-v0-600 dark:text-v0-300">
-        <p className="font-semibold text-v0-800 dark:text-v0-100">{title}</p>
+      <div className="flex-1 space-y-1 text-[15px] leading-relaxed text-v0-700 dark:text-v0-300">
+        <p className="font-semibold text-v0-950 dark:text-v0-50">{title}</p>
         {children}
       </div>
     </li>

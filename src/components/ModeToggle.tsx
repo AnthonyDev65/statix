@@ -5,9 +5,11 @@ import { LayoutGrid, Rows3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useUIMode, type UIMode } from '@/context/UIModeContext';
 
-const OPTIONS: Array<{ value: UIMode; label: string; icon: typeof LayoutGrid }> = [
-  { value: 'simple', label: 'Simple', icon: Rows3 },
-  { value: 'complete', label: 'Completo', icon: LayoutGrid },
+// "Calcular" muestra solo datos y resultados; "Aprender" añade fórmulas,
+// teoría paso a paso e historial.
+const OPTIONS: Array<{ value: UIMode; label: string; hint: string; icon: typeof LayoutGrid }> = [
+  { value: 'simple', label: 'Calcular', hint: 'Solo datos y resultados', icon: Rows3 },
+  { value: 'complete', label: 'Aprender', hint: 'Con fórmulas, teoría e historial', icon: LayoutGrid },
 ];
 
 export function ModeToggle() {
@@ -17,9 +19,9 @@ export function ModeToggle() {
     <div
       role="group"
       aria-label="Modo de interfaz"
-      className="relative hidden items-center rounded-md border border-v0-150/30 bg-v0-50 p-0.5 dark:border-v0-800/30 dark:bg-v0-900 md:inline-flex"
+      className="relative hidden items-center rounded-md border border-v0-150 bg-v0-50 p-0.5 dark:border-v0-800 dark:bg-v0-900 md:inline-flex"
     >
-      {OPTIONS.map(({ value, label, icon: Icon }) => {
+      {OPTIONS.map(({ value, label, hint, icon: Icon }) => {
         const active = mode === value;
         return (
           <button
@@ -27,10 +29,11 @@ export function ModeToggle() {
             type="button"
             onClick={() => setMode(value)}
             aria-pressed={active}
-            className={`relative z-10 inline-flex items-center gap-1.5 rounded-[5px] px-2.5 py-1 font-mono text-[11px] font-medium transition-colors duration-200 ${
+            title={hint}
+            className={`relative z-10 inline-flex h-8 items-center gap-1.5 rounded-[5px] px-3 text-[14px] font-medium transition-colors duration-200 ${
               active
                 ? 'text-v0-950 dark:text-v0-50'
-                : 'text-v0-500/70 hover:text-v0-800 dark:text-v0-300/80 dark:hover:text-v0-100'
+                : 'text-v0-600 hover:text-v0-900 dark:text-v0-300 dark:hover:text-v0-50'
             }`}
           >
             {active && (
@@ -40,7 +43,7 @@ export function ModeToggle() {
                 transition={{ type: 'spring', stiffness: 400, damping: 32 }}
               />
             )}
-            <Icon size={12} strokeWidth={2} />
+            <Icon size={14} strokeWidth={1.75} />
             {label}
           </button>
         );

@@ -11,9 +11,12 @@ interface SectionProps {
   children: ReactNode;
   delay?: number;
   className?: string;
+  /** Obsoleto: se conserva por compatibilidad; todos los títulos usan el mismo estilo. */
   monospaceTitle?: boolean;
-  /** Añade un divisor superior para separar visualmente bloques mayores. */
+  /** Añade más aire arriba para separar bloques mayores. */
   divider?: boolean;
+  /** Muestra el encabezado también en el modo "Calcular". */
+  alwaysShowHeader?: boolean;
 }
 
 export function Section({
@@ -22,40 +25,31 @@ export function Section({
   children,
   delay = 0,
   className = '',
-  monospaceTitle = false,
   divider = false,
+  alwaysShowHeader = false,
 }: SectionProps) {
   const { simpleMode } = useUIMode();
-  const showHeader = !simpleMode && (title || description);
+  const showHeader = (alwaysShowHeader || !simpleMode) && (title || description);
   return (
     <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
-      className={`space-y-5 ${
-        divider ? 'border-t border-v0-200/40 pt-11 dark:border-v0-800/40' : ''
-      } ${className}`}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '0px 0px -60px 0px' }}
+      transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={`space-y-5 ${divider ? 'pt-8' : ''} ${className}`}
     >
       {showHeader && (
-        <header className="flex items-end justify-between gap-4">
-          <div>
-            {title && (
-              <h2
-                className={
-                  monospaceTitle
-                    ? 'font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-v0-600 dark:text-v0-300'
-                    : 'text-[20px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50'
-                }
-              >
-                {title}
-              </h2>
-            )}
-            {description && (
-              <p className="mt-1.5 text-[13px] leading-relaxed text-v0-600 dark:text-v0-300">
-                {description}
-              </p>
-            )}
-          </div>
+        <header>
+          {title && (
+            <h2 className="text-[22px] font-semibold tracking-vercel text-v0-950 dark:text-v0-50">
+              {title}
+            </h2>
+          )}
+          {description && (
+            <p className="mt-1 max-w-[65ch] text-[15px] leading-relaxed text-v0-600 dark:text-v0-300">
+              {description}
+            </p>
+          )}
         </header>
       )}
       {children}

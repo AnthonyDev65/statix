@@ -53,6 +53,7 @@ export function ThemeProvider({ children }: ProviderProps) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook junto a su proveedor
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme debe usarse dentro de <ThemeProvider>');

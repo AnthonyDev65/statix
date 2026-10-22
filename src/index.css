@@ -29,13 +29,26 @@
     font-feature-settings: 'cv11', 'ss01', 'ss03', 'cv02';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #ffffff;
+    background-color: #fafafa;
     color: #0a0a0a;
     text-rendering: optimizeLegibility;
   }
   html.dark body {
     background-color: #000000;
     color: #fafafa;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  h1, h2, h3 {
+    text-wrap: balance;
   }
 
   /* Tipografía display con tracking ajustado — firma Vercel */
@@ -91,7 +104,7 @@
   /* Selection */
   ::selection {
     background: #0a0a0a;
-    color: #ffffff;
+    color: #fafafa;
   }
   html.dark ::selection {
     background: #fafafa;
@@ -99,133 +112,22 @@
   }
 }
 
-@layer components {
-  /* Card base con borde sutil, sin sombras pesadas */
-  .v0-card {
-    @apply rounded-lg border border-v0-150/30 bg-v0-50 dark:border-v0-800/30 dark:bg-v0-900;
-  }
-
-  .v0-card-elevated {
-    @apply rounded-lg border border-v0-150/30 bg-v0-50 shadow-soft dark:border-v0-800/30 dark:bg-v0-950;
-  }
-
-  /* Etiqueta de sección estilo Vercel */
-  .v0-section-label {
-    @apply flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-v0-500 dark:text-v0-400;
-  }
-
-  /* Status tipo deploy */
-  .v0-status {
-    @apply inline-flex items-center gap-1.5 font-mono text-[11px] font-medium;
-  }
-  .v0-status-dot {
-    @apply relative inline-block h-1.5 w-1.5 rounded-full;
-  }
-
-  /* Botón primario Vercel — negro en light, blanco en dark */
-  .v0-btn-primary {
-    @apply inline-flex h-10 items-center justify-center gap-2 rounded-md
-           bg-v0-950 px-4 text-[13px] font-medium text-v0-50
-           transition-all duration-200
-           hover:bg-v0-800 hover:shadow-soft
-           active:scale-[0.98] active:bg-v0-900
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v0-950 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-           disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-v0-950 disabled:active:scale-100
-           dark:bg-v0-50 dark:text-v0-950
-           dark:hover:bg-v0-50 dark:hover:shadow-soft
-           dark:active:bg-v0-100
-           dark:focus-visible:ring-v0-50 dark:focus-visible:ring-offset-v0-950;
-  }
-
-  /* Botón secundario */
-  .v0-btn-secondary {
-    @apply inline-flex h-10 items-center justify-center gap-2 rounded-md
-           border border-v0-200/30 bg-v0-50 px-4 text-[13px] font-medium text-v0-900
-           transition-all duration-200
-           hover:bg-v0-50 hover:border-v0-300/60
-           active:scale-[0.98] active:bg-v0-75
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v0-200 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-           dark:border-v0-700/30 dark:bg-v0-950 dark:text-v0-50
-           dark:hover:bg-v0-900 dark:hover:border-v0-600
-           dark:active:bg-v0-800
-           dark:focus-visible:ring-v0-700 dark:focus-visible:ring-offset-v0-950;
-  }
-
-  /* Botón ghost */
-  .v0-btn-ghost {
-    @apply inline-flex h-10 items-center justify-center gap-2 rounded-md
-           px-3 text-[13px] font-medium text-v0-500
-           transition-all duration-200
-           hover:bg-v0-75 hover:text-v0-900
-           active:scale-[0.98]
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v0-200
-           dark:text-v0-400
-           dark:hover:bg-v0-900 dark:hover:text-v0-100
-           dark:focus-visible:ring-v0-700;
-  }
-
-  /* Icon button cuadrado */
-  .v0-icon-btn {
-    @apply inline-flex h-10 w-10 items-center justify-center rounded-md
-           text-v0-500 transition-all duration-200
-           hover:bg-v0-75 hover:text-v0-900
-           active:scale-[0.96] active:bg-v0-100
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v0-200
-           dark:text-v0-400
-           dark:hover:bg-v0-900 dark:hover:text-v0-100
-           dark:active:bg-v0-800
-           dark:focus-visible:ring-v0-700;
-  }
+/* Deriva lenta de la imagen principal (la única imagen en movimiento). */
+@keyframes drift {
+  from { transform: scale(1) translateY(0); }
+  to { transform: scale(1.08) translateY(-2%); }
 }
 
 @layer utilities {
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
 
   .text-balance {
     text-wrap: balance;
-  }
-
-  /* Anillo de focus en dark mode (para botones con fondo claro) */
-  .ring-focus-dark {
-    box-shadow: 0 0 0 4px rgb(250 250 250 / 0.12);
-  }
-  .ring-focus-light {
-    box-shadow: 0 0 0 4px rgb(10 10 10 / 0.08);
-  }
-
-  /* Hairline border: 1px que se ve nítido en cualquier DPR */
-  .border-hairline {
-    box-shadow: inset 0 0 0 1px var(--border);
-  }
-
-  /* Animated border bottom indicator (Linear/Vercel style) */
-  .border-b-active {
-    background-image: linear-gradient(to right, currentColor 50%, transparent 50%);
-    background-size: 8px 1px;
-    background-repeat: repeat-x;
-    background-position: 0 100%;
-  }
-
-  /* Shimmer overlay para estados "computing" */
-  .shimmer-bar {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.15) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.6s linear infinite;
-  }
-  html.dark .shimmer-bar {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.20) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
   }
 }

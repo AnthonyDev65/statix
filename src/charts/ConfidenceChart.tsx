@@ -34,22 +34,22 @@ export function ConfidenceChart({
           transition={{ delay: 0.3, duration: 0.25 }}
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         >
-          <div className="h-4 w-4 rounded-full border-2 border-white bg-v0-950 shadow-soft dark:border-v0-950 dark:bg-v0-50" />
-          <div className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap font-mono text-[11.5px] font-semibold text-v0-950 dark:text-v0-50 tabular-nums">
+          <div className="h-4 w-4 rounded-full border-2 border-white bg-v0-950 dark:border-v0-950 dark:bg-v0-50" />
+          <div className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap text-[13px] font-semibold text-v0-950 dark:text-v0-50 tabular-nums">
             {formatNumber(center, 4)}
-            <span className="ml-0.5 text-[10px] text-v0-400 dark:text-v0-500">{unit}</span>
+            <span className="ml-0.5 text-[13px] text-v0-500 dark:text-v0-300">{unit}</span>
           </div>
         </motion.div>
 
         <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="h-3 w-px bg-v0-400 dark:bg-v0-500" />
-          <div className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap font-mono text-[10.5px] font-medium text-v0-500 dark:text-v0-400 tabular-nums">
+          <div className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap text-[13px] font-medium text-v0-500 dark:text-v0-300 tabular-nums">
             {formatNumber(lower, 4)}
           </div>
         </div>
         <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2">
           <div className="h-3 w-px bg-v0-400 dark:bg-v0-500" />
-          <div className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap font-mono text-[10.5px] font-medium text-v0-500 dark:text-v0-400 tabular-nums">
+          <div className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap text-[13px] font-medium text-v0-500 dark:text-v0-300 tabular-nums">
             {formatNumber(upper, 4)}
           </div>
         </div>
